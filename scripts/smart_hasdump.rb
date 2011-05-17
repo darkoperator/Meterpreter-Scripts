@@ -45,8 +45,10 @@ meter_type = client.platform
 # Usage Message Function
 #-------------------------------------------------------------------------------
 def usage
-	print_line "Meterpreter Script for initial information gathering mainly"
-	print_line "screenshot and hashdump."
+	print_line "Meterpreter Script for automating the dumping of local accounts from" 
+	print_line "the SAM Database and if the targets host is a Domain Controller the" 
+	print_line "Domain Account Database using the proper technique depending on "
+	print_line "privilage level, OS and Role of host."
 	print_line(exec_opts.usage)
 	raise Rex::Script::Completed
 end
