@@ -38,7 +38,7 @@ class Metasploit3 < Msf::Post
                            ))
 		register_options(
                          [
-                         OptBool.new('GETSYSTEM', [ false, 'Description', false])
+                         OptBool.new('GETSYSTEM', [ false, 'Attempt to get SYSTEM Privilege on the target host.', false])
                          
                          ], self.class)
 		@smb_port = 445
