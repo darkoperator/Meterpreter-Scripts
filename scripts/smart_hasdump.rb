@@ -33,7 +33,7 @@ log_folder = nil
 	224,224,227,227,229,229,230,230,233,233,234,234,236,236,239,239,
 	241,241,242,242,244,244,247,247,248,248,251,251,253,253,254,254
 ]
-exec_opts = Rex::Parser::Arguments.new(
+@exec_opts = Rex::Parser::Arguments.new(
 	"-h" => [ false, "Help menu." ],
 	"-l" => [ true,  "Log folder to save results, if none provided default log path will be used."],
 	"-s" => [ true,  "Try to get SYSTEM Privilege"]
@@ -49,7 +49,7 @@ def usage
 	print_line "the SAM Database and if the targets host is a Domain Controller the" 
 	print_line "Domain Account Database using the proper technique depending on "
 	print_line "privilage level, OS and Role of host."
-	print_line(exec_opts.usage)
+	print_line(@exec_opts.usage)
 	raise Rex::Script::Completed
 end
 
