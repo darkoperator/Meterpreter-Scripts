@@ -434,6 +434,8 @@ class Metasploit3 < Msf::Post
 									print_good("\t#{h}".chomp)
 									file_local_write(pwdfile,h.chomp)
 								end
+							else
+								print_error("Could not obtain System Privileges")
 							end
                             else
 							print_error("Could not get Domain Hashes!")
@@ -450,6 +452,8 @@ class Metasploit3 < Msf::Post
 								print_good("\t#{h.chomp}")
 								file_local_write(pwdfile,h.chomp)
 							end
+						else
+							print_error("Could not obtain System Privileges")
 						end
                         else
 						print_error("On this version of Windows you need to be NT AUTHORITY\\SYSTEM to dump the hashes")
@@ -467,6 +471,8 @@ class Metasploit3 < Msf::Post
 								print_good("\t#{h.chomp}")
 								file_local_write(pwdfile,h.chomp)
 							end
+						else
+							print_error("Could not obtain System Privileges")
 						end
                         else
 						inject_hashdump.each_line do |h|
