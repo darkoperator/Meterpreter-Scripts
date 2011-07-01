@@ -20,9 +20,9 @@ require 'msf/core/post/file'
 class Metasploit3 < Msf::Post
 
 	include Msf::Post::Common
-	include Msf::Post::Priv
-	include Msf::Post::Registry
-	include Msf::Post::Accounts
+	include Msf::Post::Windows::Priv
+	include Msf::Post::Windows::Registry
+	include Msf::Post::Windows::Accounts
 	include Msf::Auxiliary::Report
 	include Msf::Post::File
 
