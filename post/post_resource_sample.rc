@@ -1,0 +1,2 @@
+all linux/gather/checkvm
+1,2 windows/gather/enum_logged_on_users CURRENT=true,RECENT=false
