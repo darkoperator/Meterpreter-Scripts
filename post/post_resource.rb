@@ -7,7 +7,7 @@ class Metasploit3 < Msf::Auxiliary
 				'Name'          => 'Post Module Resource file Automation Module',
 				'Description'   => %q{ Run resource file with post modules and options
 									against specified sessions.},
-				'License'       => "GPL2",
+				'License'       => "BSD",
 				'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
 				'Version'       => '$Revision$'
 			))

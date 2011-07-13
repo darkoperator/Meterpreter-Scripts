@@ -7,7 +7,7 @@ class Metasploit3 < Msf::Auxiliary
 				'Name'          => 'Post Moudule Execution Automation Module',
 				'Description'   => %q{ Run specified module against a a given set
 									of sessions or all sessions.},
-				'License'       => "GPL2",
+				'License'       => "BSD",
 				'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
 				'Version'       => '$Revision$'
 			))

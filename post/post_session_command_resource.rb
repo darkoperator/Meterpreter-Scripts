@@ -7,7 +7,7 @@ class Metasploit3 < Msf::Auxiliary
 				'Name'          => 'Execute Meterpreter Console Command Resource File',
 				'Description'   => %q{Execute Meterpreter Console Commands in resourcefileagainst
 									specified sessions.},
-				'License'       => "GPL2",
+				'License'       => "BSD",
 				'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
 				'Version'       => '$Revision$'
 			))
