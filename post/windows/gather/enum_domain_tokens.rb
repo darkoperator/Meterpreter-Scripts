@@ -49,16 +49,22 @@ class Metasploit3 < Msf::Post
 	def run
 		print_status("Running module against #{sysinfo['Computer']}") if not sysinfo.nil?
 		domain = get_domain()
+		
 		if not domain.empty?
 			uid = client.sys.config.getuid
 			dom_admins = list_domain_group_mem("Domain Admins")
+			
 			if  uid =~ /#{domain}/
 				user = uid.split("\\")[1]
 				if dom_admins.include?(user)
 					print_good("Current session is running under a Domain Admin Account")
 				end
 			end
-			list_group_members(domain, dom_admins)
+			
+			if not is_dc?
+				list_group_members(domain, dom_admins)
+			end
+			
 			list_tokens(domain, dom_admins)
 			list_processes(domain, dom_admins)
 		end
@@ -97,7 +103,6 @@ class Metasploit3 < Msf::Post
 		rescue
 			print_error("This host is not part of a domain.")
 		end
-		
 		return domain
 	end
 	
@@ -244,5 +249,18 @@ class Metasploit3 < Msf::Post
 		end
 		results = tbl.to_s
 		print_line("\n" + results + "\n")
+	end
+	
+	# Function for checking if target is a DC
+	def is_dc?
+		is_dc_srv = false
+		serviceskey = "HKLM\\SYSTEM\\CurrentControlSet\\Services"
+		if registry_enumkeys(serviceskey).include?("NTDS")
+			if registry_enumkeys(serviceskey + "\\NTDS").include?("Parameters")
+				print_good("\tThis host is a Domain Controller!")
+				is_dc_srv = true
+			end
+		end
+		return is_dc_srv
 	end
 end
