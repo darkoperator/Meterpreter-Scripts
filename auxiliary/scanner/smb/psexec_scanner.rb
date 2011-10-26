@@ -29,7 +29,7 @@ class Metasploit3 < Msf::Auxiliary
 					current workspace database.
 				},
 				'License'       => MSF_LICENSE,
-				'Author'        => [ 'Carlo Perez <carlos_perez[at]darkoperator.com>'],
+				'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
 				'Version'       => '$Revision$'
 			))
 		register_options(
