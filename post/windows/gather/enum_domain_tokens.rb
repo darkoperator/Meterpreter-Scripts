@@ -29,8 +29,8 @@ class Metasploit3 < Msf::Post
 		super( update_info( info,
 				'Name'          => 'Windows Gather Enumerate Domain Tokens',
 				'Description'   => %q{ 
-						This module will enumearte tokens present on a system that are part of the
-						domain the target host is part of, will also enurate users in the local
+						This module will enumerate tokens present on a system that are part of the
+						domain the target host is part of, will also enumerate users in the local
 						Administrators, Users and Backup Operator groups to identify Domain members.
 						Processes will be also enumerated and checked if they are running under a
 						Domain account, on all checks the accounts, processes and tokens will be
@@ -177,7 +177,7 @@ class Metasploit3 < Msf::Post
 	
 	def list_group_members(domain,dom_admins)
 		tbl = Rex::Ui::Text::Table.new(
-			'Header'  => "Account in Local Gorups with Domain Context",
+			'Header'  => "Account in Local Groups with Domain Context",
 			'Indent'  => 1,
 			'Columns' =>
 			  [
@@ -236,7 +236,7 @@ class Metasploit3 < Msf::Post
 				"User",
 				"Domain Admin"
 			])
-		print_status("Checking for processes runing under domain user")
+		print_status("Checking for processes running under domain user")
 		client.sys.process.processes.each do |p|
 			if p['user'] =~ /#{domain}/
 				user = p['user'].split("\\")[1]
