@@ -45,7 +45,7 @@ class Metasploit3 < Msf::Auxiliary
 				OptString.new('PAYLOAD', [true, 'Payload to use against Windows host',
 						"windows/meterpreter/reverse_tcp"]),
 				OptEnum.new('TYPE', [false, 
-						'Type of credentials to use, manual for provided one, db for those found on the datababse',
+						'Type of credentials to use, manual for provided one, db for those found on the database',
 						'manual', ['db','manual']]),
 				OptString.new('OPTIONS',
 				[false, "Comma separated list of additional options for payload if needed in \'opt=val,opt=val\' format.",
@@ -65,7 +65,7 @@ class Metasploit3 < Msf::Auxiliary
 		opts     = datastore['OPTIONS']
 
 		if datastore['TYPE'] == "db"
-			print_status("Using the credentials founf in the workspace datatbase")
+			print_status("Using the credentials found in the workspace database")
 			collect_hashes()
 		else
 			print_status("Using the username and password provided")
