@@ -71,7 +71,6 @@ class Metasploit3 < Msf::Auxiliary
 			print_status("Using the username and password provided")
 		end
 		@pay = create_payload(pay_name,lhost,lport,opts)
-		puts @pay
 		create_multihand(pay_name,lhost,lport) if datastore['HANDLER']
 	end
 
