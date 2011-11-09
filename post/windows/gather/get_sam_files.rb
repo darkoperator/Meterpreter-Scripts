@@ -1,48 +1,22 @@
 ##
 # $Id$
 ##
-
-##
-# ## This file is part of the Metasploit Framework and may be subject to
-# redistribution and commercial restrictions. Please see the Metasploit
-# Framework web site for more information on licensing and terms of use.
-# http://metasploit.com/framework/
-##
-
 require 'msf/core'
 require 'rex'
 
 # Multi platform requiere
 require 'msf/core/post/common'
 require 'msf/core/post/file'
-
-##############################
-# uncomment needed requires  #
-# Remove un-needded requires #
-##############################
-
-# Windows Post Mixin Requiere
-#require 'msf/core/post/windows/eventlog'
 require 'msf/core/post/windows/priv'
 require 'msf/core/post/windows/registry'
-#require 'msf/core/post/windows/accounts'
 
 class Metasploit3 < Msf::Post
 
 	include Msf::Post::Common
 	include Msf::Post::File
-
-	##############################
-	# uncomment inlcudes needed  #
-	# Remove un-needded includes #
-	##############################
-
-	# Windows Post Mixin Requiere
-	#include Msf::Post::Windows::Eventlog
 	include Msf::Post::Windows::Priv
 	include Msf::Post::Windows::Registry
-	#include Msf::Post::Windows::Accounts
-
+	
 	def initialize(info={})
 		super( update_info( info,
 				'Name'          => 'Post Windows Gather SAM Files Module',
