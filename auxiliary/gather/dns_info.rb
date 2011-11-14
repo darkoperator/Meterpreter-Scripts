@@ -38,7 +38,7 @@ class Metasploit3 < Msf::Auxiliary
 		wildcard(datastore['DOMAIN'])
 		switchdns() if not datastore['NS'].nil?
 
-		# Get A and AAAA Records for the domain
+		# Get A and AAAA Records for the domainload edito
 		get_ip(datastore['DOMAIN']).each do |r|
 			print_good("#{r[:host]} #{r[:address]} #{r[:type]}")
 			report_host(:host => r[:address])
