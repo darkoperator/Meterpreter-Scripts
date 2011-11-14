@@ -22,6 +22,8 @@ class Metasploit3 < Msf::Post
 				'Description'   => %q{
 					Post Module that uses the volume shadow service to be able to get the SYSTEM,
 					SAM and in the case of Domain Controllers the NTDS files for offline hash dumping.
+					http://csababarta.com/downloads/ntds_dump_hash.zip tool can be used for processing
+					the collected files.
 				},
 				'License'       => BSD_LICENSE,
 				'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
