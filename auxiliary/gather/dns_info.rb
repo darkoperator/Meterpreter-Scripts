@@ -102,21 +102,29 @@ class Metasploit3 < Msf::Auxiliary
 		query = @res.search(host, "A")
 		if (query)
 			query.answer.each do |rr|
-				record = {}
-				record[:host] = host
-				record[:type] = "A"
-				record[:address] = rr.address.to_s
-				results << record
+				if rr.type == "CNAME"
+					results = results + get_ip(rr.cname)
+				else
+					record = {}
+					record[:host] = host
+					record[:type] = "AAAA"
+					record[:address] = rr.address.to_s
+					results << record
+				end
 			end
 		end
 		query1 = @res.search(host, "AAAA")
 		if (query1)
 			query1.answer.each do |rr|
-				record = {}
-				record[:host] = host
-				record[:type] = "AAAA"
-				record[:address] = rr.address.to_s
-				results << record
+				if rr.type == "CNAME"
+					results = results + get_ip(rr.cname)
+				else
+					record = {}
+					record[:host] = host
+					record[:type] = "AAAA"
+					record[:address] = rr.address.to_s
+					results << record
+				end
 			end
 		end
 		return results
