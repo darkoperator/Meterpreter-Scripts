@@ -81,6 +81,87 @@ class Metasploit3 < Msf::Auxiliary
 		end
 	end
 
+	srvqry(datastore['DOMAIN']).each do |r|
+		print_good("Host: #{r[:host]} IP: #{r[:address].to_s} Service: #{r[:service]} Protocol: #{r[:proto]} Port: #{r[:port]}")
+		report_service(
+			:host=> r[:address].to_s,
+			:port => r[:port].to_i,
+			:proto => r[:proto],
+			:name => r[:service],
+			:host_name => r[:host]
+		)
+		report_host(
+			:host => r[:address].to_s,
+			:name => r[:host]
+		)
+	end
+	
+	#-------------------------------------------------------------------------------
+	def srvqry(dom)
+		results = []
+		#Most common SRV Records
+		srvrcd = [
+        '_gc._tcp.', '_kerberos._tcp.', '_kerberos._udp.', '_ldap._tcp.',
+        '_test._tcp.', '_sips._tcp.', '_sip._udp.', '_sip._tcp.', '_aix._tcp.',
+        '_aix._tcp.', '_finger._tcp.', '_ftp._tcp.', '_http._tcp.', '_nntp._tcp.',
+        '_telnet._tcp.', '_whois._tcp.', '_h323cs._tcp.', '_h323cs._udp.',
+        '_h323be._tcp.', '_h323be._udp.', '_h323ls._tcp.',
+        '_h323ls._udp.', '_sipinternal._tcp.', '_sipinternaltls._tcp.',
+        '_sip._tls.', '_sipfederationtls._tcp.', '_jabber._tcp.',
+        '_xmpp-server._tcp.', '_xmpp-client._tcp.', '_imap.tcp.',
+        '_certificates._tcp.', '_crls._tcp.', '_pgpkeys._tcp.',
+        '_pgprevokations._tcp.', '_cmp._tcp.', '_svcp._tcp.', '_crl._tcp.',
+        '_ocsp._tcp.', '_PKIXREP._tcp.', '_smtp._tcp.', '_hkp._tcp.',
+        '_hkps._tcp.', '_jabber._udp.','_xmpp-server._udp.', '_xmpp-client._udp.',
+        '_jabber-client._tcp.', '_jabber-client._udp.','_kerberos.tcp.dc._msdcs.',
+        '_ldap._tcp.ForestDNSZones.', '_ldap._tcp.dc._msdcs.', '_ldap._tcp.pdc._msdcs.',
+		'_ldap._tcp.gc._msdcs.','_kerberos._tcp.dc._msdcs.','_kpasswd._tcp.','_kpasswd._udp.'
+        ]
+
+		srvrcd.each do |srvt|
+			trg = "#{srvt}#{dom}"
+			begin
+	
+			query = @res.query(trg , Net::DNS::SRV)
+			if query
+					query.answer.each do |srv|
+						if Rex::Socket.dotted_ip?(srv.host)
+							record = {}
+							srv_info = srvt.scan(/^_(\S*)\._(tcp|udp)\./)[0]
+							record[:host] = srv.host.gsub(/\.$/,'')
+							record[:type] = "SRV"
+							record[:address] = srv.host
+							record[:srv] = srvt
+							record[:service] = srv_info[0]
+							record[:proto] = srv_info[1]
+							record[:port] = srv.port
+							record[:priority] = srv.priority
+							results << record
+							vprint_status("SRV Record: #{trg} Host: #{srv.host.gsub(/\.$/,'')} IP: #{srv.host} Port: #{srv.port} Priority: #{srv.priority}")
+						else
+							get_ip(srv.host.gsub(/\.$/,'')).each do |ip|
+								record = {}
+								srv_info = srvt.scan(/^_(\S*)\._(tcp|udp)\./)[0]
+								record[:host] = srv.host.gsub(/\.$/,'')
+								record[:type] = "SRV"
+								record[:address] = ip[:address]
+								record[:srv] = srvt
+								record[:service] = srv_info[0]
+								record[:proto] = srv_info[1]
+								record[:port] = srv.port
+								record[:priority] = srv.priority
+								results << record
+								vprint_status("SRV Record: #{trg} Host: #{srv.host} IP: #{ip[:address]} Port: #{srv.port} Priority: #{srv.priority}")
+							end
+						end
+					end
+				end
+			rescue
+			end
+		end
+		return results
+	end
+	
 	#---------------------------------------------------------------------------------
 	def wildcard(target)
 		rendsub = rand(10000).to_s
