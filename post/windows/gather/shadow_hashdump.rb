@@ -392,7 +392,7 @@ class Metasploit3 < Msf::Post
 			print_status("Executable uploaded")
 		else
 			print_error("setacl in not in your data folder")
-			print_error("Download and place the subinacl.exe in")
+			print_error("Download and place the SetACL.exe in")
 			print_error(path)
 			print_error("Download from http://helgeklein.com/")
 		end
