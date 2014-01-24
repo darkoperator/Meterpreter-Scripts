@@ -10,8 +10,8 @@ class Metasploit3 < Msf::Post
 
   def initialize(info={})
     super( update_info( info,
-        'Name'          => 'Windows Gather AD Enumerate Domain Controllers',
-        'Description'   => %q{ This Module will perform an ADSI query and enumerate all Domain Controllers
+        'Name'          => 'Windows Gather AD Enumerate Domain Organizational Units',
+        'Description'   => %q{ This Module will perform an ADSI query and enumerate all Orgabizational Units
           on the domain the host is a member of through a Windows Meterpreter Session.},
         'License'       => BSD_LICENSE,
         'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
@@ -20,7 +20,7 @@ class Metasploit3 < Msf::Post
       ))
     register_options(
       [
-        OptBool.new('EXCLUDE_RODC', [true, 'Exclude Read-Only Domain Controllers.', false]),
+        OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
         OptInt.new('MAX', [false, 'The number of maximun results to enumerate.', 100])
       ], self.class)
   end
@@ -37,64 +37,32 @@ class Metasploit3 < Msf::Post
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
           'SortIndex' => -1,
+          'Width' => 80,
           'Columns' =>
           [
-            'Hostname',
-            'Addess',
-            'OS',
-            'SP'
+            'Name',
+            'DistinguishedName'
           ]
         )
 
-        inner_filter = "(objectCategory=computer)(userAccountControl:1.2.840.113556.1.4.803:=8192)"
-        if datastore['EXCLUDE_RODC']
-          inner_filter = "#{inner_filter}(!(userAccountControl:1.2.840.113556.1.4.803:=67108864))"
-        end
-        filter =  "(&#{inner_filter})"
+        filter =   '(groupType:1.2.840.113556.1.4.803:=2147483648)'
         query_result = session.extapi.adsi.domain_query(domain,
                                                         filter,
                                                         datastore['MAX'],
                                                         datastore['MAX'],
-                                                        ["dnshostname","operatingsystem","operatingSystemServicePack"]
+                                                        ["name", "distinguishedname"]
                                                       )
-        query_result[:results].each do |dc|
-          # Resolve IPv4 address
-          begin
-            ipv4_info = session.net.resolve.resolve_host(dc[0], AF_INET)
-            table << [dc[0],ipv4_info[:ip],dc[1],dc[2]]
+        query_result[:results].each do |obj|
+          table << obj
+        end
+        table.print
+        print_line
 
-            service_pack = dc[2].gsub("Service Pack", "SP")
-            # Save found DC in the database
-            report_host({:host => ipv4_info[:ip],
-              :os_name => 'Windows',
-              :os_flavor => dc[1],
-              :name => dc[0],
-              :purpose => 'server',
-              :comments => 'Domain Controller',
-              :os_sp => service_pack
-            })
-          rescue
-          end
-
-          # Resolve IPv6 address
-          begin
-            ipv6_info = session.net.resolve.resolve_host(dc[0], AF_INET6)
-            table << [dc[0],ipv6_info[:ip],dc[1],dc[2]]
-
-            # Save found DC in the database
-            report_host({:host => ipv6_info[:ip],
-              :os_name => 'Windows',
-              :os_flavor => dc[1],
-              :name => dc[0],
-              :purpose => 'server',
-              :comments => 'Domain Controller',
-            })
-          rescue
-          end
+        if datastore['STORE_LOOT']
+          stored_path = store_loot('ad.groups', 'text/plain', session, table.to_csv)
+          print_status("Results saved to: #{stored_path}")
         end
 
-        table.print
-        print_line("")
       end
     end
   end
@@ -110,7 +78,7 @@ class Metasploit3 < Msf::Post
       return nil
     end
     if (!domain_dc.nil?)
-      # lets parse the information
+      # leys parse the information
       dom_info =  domain_dc.split('.')
       domain = dom_info[1].upcase
     else
