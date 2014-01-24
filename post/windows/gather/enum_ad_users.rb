@@ -24,7 +24,7 @@ class Metasploit3 < Msf::Post
         OptBool.new('EXCLUDE_LOCKED', [true, 'Exclude in search locked accounts..', false]),
         OptBool.new('EXCLUDE_DISABLED', [true, 'Exclude from search disabled accounts.', false]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
-        OptEnum.new('PASSWORD_STATE', [true, 'Filter for the state of the account when authenticating using a password.', 'ANY', ['ANY',
+        OptEnum.new('UAC', [true, 'Filter on User Account Control Setting.', 'ANY', ['ANY',
           'NO_PASSWORD',
           'CHANGE_PASSWORD',
           'NEVER_EXPIRES',
@@ -65,7 +65,7 @@ class Metasploit3 < Msf::Post
           inner_filter = "#{inner_filter}(!(userAccountControl:1.2.840.113556.1.4.803:=2))"
         end
 
-        case datastore['PASSWORD_STATE']
+        case datastore['UAC']
 
         when 'ANY'
           inner_filter = "#{inner_filter}"
