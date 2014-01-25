@@ -49,7 +49,7 @@ class Metasploit3 < Msf::Post
           ]
         )
 
-        filter =   "(|(&(objectCategory=person)(objectClass=user))(objectClass=computer)(objectClass=group))"
+        filter =   "(|(&(objectCategory=person)(objectClass=user))(objectClass=computer)(objectClass=group)(objectClass=organizationalUnit))"
         query_result = session.extapi.adsi.domain_query(datastore['OU_DN'],
                                                         filter,
                                                         datastore['MAX'],
@@ -67,6 +67,8 @@ class Metasploit3 < Msf::Post
             objtype = "Computer"
           when /^CN=Group*/
             objtype = "Group"
+          when /^CN=Organizational-Unit*/
+            objtype = "OU"
           end
 
           table << [obj[0], obj[1], obj[2], objtype]
@@ -75,7 +77,7 @@ class Metasploit3 < Msf::Post
         print_line
 
         if datastore['STORE_LOOT']
-          stored_path = store_loot('ad.groups_members', 'text/plain', session, table.to_csv)
+          stored_path = store_loot('ad.ou_members', 'text/plain', session, table.to_csv)
           print_status("Results saved to: #{stored_path}")
         end
 
