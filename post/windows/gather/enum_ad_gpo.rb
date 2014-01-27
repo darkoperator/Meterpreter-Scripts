@@ -1,3 +1,8 @@
+# Reference: http://msdn.microsoft.com/en-us/library/cc232507.aspx
+# Reference: http://msdn.microsoft.com/en-us/library/cc232505.aspx
+# Reference: http://blogs.technet.com/b/mempson/archive/2010/12/01/group-policy-client-side-extension-list.aspx
+# Reference: http://msdn.microsoft.com/en-us/library/cc232600.aspx
+
 require 'msf/core'
 require 'rex'
 require 'msf/core/auxiliary/report'
