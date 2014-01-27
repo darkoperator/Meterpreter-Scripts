@@ -10,7 +10,7 @@ class Metasploit3 < Msf::Post
 
   def initialize(info={})
     super( update_info( info,
-        'Name'          => 'Windows Gather AD Enumerate Domain Container Membership',
+        'Name'          => 'Windows Gather AD Enumerate Domain Security Group Membership',
         'Description'   => %q{ This Module will perform an ADSI query and enumerate
           all members of a given security group or Organizational Unit given its Distinguished Name on
           the domain the host is a member of through a Windows Meterpreter Session.},
@@ -21,7 +21,7 @@ class Metasploit3 < Msf::Post
       ))
     register_options(
       [
-        OptString.new('CONTAINER_DN', [true, 'Distinguished Name of the group or Organizational Unit to enumerate members.', nil]),
+        OptString.new('GROUP_DN', [true, 'Distinguished Name of the group to enumerate members.', nil]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
         OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
@@ -49,7 +49,7 @@ class Metasploit3 < Msf::Post
           ]
         )
 
-        filter =   "(memberOf=#{datastore['GROUPDN']})"
+        filter =   "(memberOf=#{datastore['GROUP_DN']})"
         query_result = session.extapi.adsi.domain_query(domain,
                                                         filter,
                                                         datastore['MAX_SEARCH'],
