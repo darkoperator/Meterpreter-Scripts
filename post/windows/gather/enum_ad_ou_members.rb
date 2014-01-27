@@ -23,7 +23,7 @@ class Metasploit3 < Msf::Post
       [
         OptString.new('OU_DN', [true, 'Distinguished Name of the group or Organizational Unit to enumerate members.', nil]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
-        OptInt.new('MAX', [false, 'The number of maximun results to enumerate.', 100])
+        OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
   end
 
@@ -52,8 +52,8 @@ class Metasploit3 < Msf::Post
         filter =   "(|(&(objectCategory=person)(objectClass=user))(objectClass=computer)(objectClass=group)(objectClass=organizationalUnit))"
         query_result = session.extapi.adsi.domain_query(datastore['OU_DN'],
                                                         filter,
-                                                        datastore['MAX'],
-                                                        datastore['MAX'],
+                                                        datastore['MAX_SEARCH'],
+                                                        datastore['MAX_SEARCH'],
                                                         ["name", "samaccountname","distinguishedname",'objectcategory']
                                                       )
         query_result[:results].each do |obj|

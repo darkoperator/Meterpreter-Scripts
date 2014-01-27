@@ -30,7 +30,7 @@ class Metasploit3 < Msf::Post
           'NEVER_EXPIRES',
           'SMARTCARD_REQUIRED',
           'NEVER_LOGGEDON']]),
-        OptInt.new('MAX', [false, 'The number of maximun results to enumerate.', 100])
+        OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
   end
 
@@ -89,8 +89,8 @@ class Metasploit3 < Msf::Post
         filter =   "(&#{inner_filter})"
         query_result = session.extapi.adsi.domain_query(domain,
                                                         filter,
-                                                        datastore['MAX'],
-                                                        datastore['MAX'],
+                                                        datastore['MAX_SEARCH'],
+                                                        datastore['MAX_SEARCH'],
                                                         ["samaccountname",'mail','comment','primarygroupid','distinguishedname']
                                                       )
         query_result[:results].each do |obj|

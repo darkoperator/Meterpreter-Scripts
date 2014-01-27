@@ -22,7 +22,7 @@ class Metasploit3 < Msf::Post
     register_options(
       [
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
-        OptInt.new('MAX', [false, 'The number of maximun results to enumerate.', 100])
+        OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
   end
 
@@ -51,8 +51,8 @@ class Metasploit3 < Msf::Post
         filter =   "(&(sAMAccountType=805306368)(userAccountControl:1.2.840.113556.1.4.803:=2))"
         query_result = session.extapi.adsi.domain_query(domain,
                                                         filter,
-                                                        datastore['MAX'],
-                                                        datastore['MAX'],
+                                                        datastore['MAX_SEARCH'],
+                                                        datastore['MAX_SEARCH'],
                                                         ["samaccountname",'mail','comment','primarygroupid','distinguishedname']
                                                       )
         query_result[:results].each do |obj|
