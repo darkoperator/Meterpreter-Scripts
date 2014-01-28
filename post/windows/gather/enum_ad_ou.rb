@@ -45,7 +45,7 @@ class Metasploit3 < Msf::Post
           ]
         )
 
-        filter =   '(groupType:1.2.840.113556.1.4.803:=2147483648)'
+        filter =   '(objectclass=organizationalunit)'
         query_result = session.extapi.adsi.domain_query(domain,
                                                         filter,
                                                         datastore['MAX_SEARCH'],
