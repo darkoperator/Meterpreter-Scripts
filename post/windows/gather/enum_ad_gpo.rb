@@ -26,6 +26,7 @@ class Metasploit3 < Msf::Post
     register_options(
       [
         #OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
+        OptBool.new('LINKED', [true, 'Show linked GPOs only.', true]),
         OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
   end
@@ -66,11 +67,19 @@ class Metasploit3 < Msf::Post
                                                           'gPCUserExtensionNames']
                                                       )
         query_result[:results].each do |obj|
+          linked_ous = get_lineked_ou(domain, obj[0])
+
+          # Check if only linked OUs are desired and process.
+          if (linked_ous.length == 0 && datastore['LINKED'])
+            next
+          end
+
           print_good "Id: #{obj[0]}"
           print_good "Name: #{obj[1]}"
           print_good "Location: #{obj[2]}"
-          print_good "Linked OUs: #{get_lineked_ou(domain, obj[0]).join("; ")}"
+          print_good "Linked OUs: #{linked_ous.join("; ")}"
 
+          # get WMI Filter information
           if (obj[3].length > 0)
             print_good "WMI Filter:"
             filter_id = obj[3].split(";")[1]
@@ -80,6 +89,7 @@ class Metasploit3 < Msf::Post
             matched_filter = wmi_filter_array.select {|filter| filter[:id] == filter_id }
             print_good "\tName: #{matched_filter[0][:name]}"
             print_good "\tId: #{matched_filter[0][:id]}"
+            print_good "\tDescription: #{matched_filter[0][:description]}"
             print_good "\tWQL: #{matched_filter[0][:filter].join("; ")}"
           end
 
@@ -136,7 +146,7 @@ class Metasploit3 < Msf::Post
     vprint_status("Emumerating all WMI Filters")
     wmi_filters = []
     wmi_msWMI_filter = '(objectClass=msWMI-Som)'
-    wmi_fileds = ['msWMI-ID','msWMI-Name', 'msWMI-Parm2']
+    wmi_fileds = ['msWMI-ID','msWMI-Name', 'msWMI-Parm1', 'msWMI-Parm2']
 
     msWMIquery_result = session.extapi.adsi.domain_query(domain,
                                                     wmi_msWMI_filter,
@@ -148,7 +158,8 @@ class Metasploit3 < Msf::Post
     msWMIquery_result[:results].each do |obj|
       wmi_filter = {:id => obj[0],
         :name =>  obj[1],
-        :filter => obj[2].split(/;\d*;\d*;\d*;\d*WQL;/).drop(1)
+        :description =>  obj[2],
+        :filter => obj[3].split(/;\d*;\d*;\d*;\d*WQL;/).drop(1)
       }
       wmi_filters << wmi_filter
     end
