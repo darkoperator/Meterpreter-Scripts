@@ -93,6 +93,10 @@ class Metasploit3 < Msf::Post
                                                         datastore['MAX_SEARCH'],
                                                         ["samaccountname",'mail','comment','primarygroupid','distinguishedname']
                                                       )
+        if query_result[:results].empty?
+          print_status "No results where found."
+        end
+
         query_result[:results].each do |obj|
            table << obj
         end

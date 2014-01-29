@@ -57,6 +57,10 @@ class Metasploit3 < Msf::Post
                                                         datastore['MAX_SEARCH'],
                                                         ["dnshostname","operatingsystem","operatingSystemServicePack"]
                                                       )
+        if query_result[:results].empty?
+          print_status "No results where found."
+        end
+
         query_result[:results].each do |dc|
           # Resolve IPv4 address
           begin
