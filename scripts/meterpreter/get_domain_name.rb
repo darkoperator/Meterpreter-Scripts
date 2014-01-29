@@ -5,7 +5,7 @@ session = client
 )
 
 # Gets the Domain Name
-def get_domain()
+def get_domain(session)
   domain = ""
   ipv4_info = nil
   ipv6_info = nil
@@ -26,7 +26,7 @@ def get_domain()
 
     # Resolve IPv4 address
     begin
-      ipv4_info = client.net.resolve.resolve_host(dc, AF_INET)
+      ipv4_info = session.net.resolve.resolve_host(dc, AF_INET)
       print_good("IPv4: #{ipv4_info[:ip]}")
 
     rescue
@@ -35,7 +35,7 @@ def get_domain()
 
     # Resolve IPv6 address
     begin
-      ipv6_info = client.net.resolve.resolve_host(dc, AF_INET6)
+      ipv6_info = session.net.resolve.resolve_host(dc, AF_INET6)
       print_good("IPv6: #{ipv6_info[:ip]}")
     rescue
       print_status("Could not resolve IPv6 for #{dc}")
