@@ -1,23 +1,25 @@
+# encoding: UTF-8
+
 require 'msf/core'
 require 'rex'
 require 'msf/core/auxiliary/report'
 
 class Metasploit3 < Msf::Post
-
   include Msf::Auxiliary::Report
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::ExtAPI
 
-  def initialize(info={})
-    super( update_info( info,
-        'Name'          => 'Windows Gather AD Enumerate Domain Disabled User Accounts',
-        'Description'   => %q{ This Module will perform an ADSI query and enumerate
-          locked user accounts for a given user on the domain the host is a member
-          of through a Windows Meterpreter Session.},
-        'License'       => BSD_LICENSE,
-        'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
-        'Platform'      => [ 'win' ],
-        'SessionTypes'  => [ 'meterpreter']
+  def initialize(info = {})
+    super(update_info(
+            info,
+            'Name'          => 'Windows Gather AD Enumerate Domain Disabled User Accounts',
+            'Description'   => %q{ This Module will perform an ADSI query and enumerate
+              locked user accounts for a given user on the domain the host is a member
+              of through a Windows Meterpreter Session.},
+            'License'       => BSD_LICENSE,
+            'Author'        => ['Carlos Perez <carlos_perez[at]darkoperator.com>'],
+            'Platform'      => ['win'],
+            'SessionTypes'  => ['meterpreter']
       ))
     register_options(
       [
@@ -33,7 +35,7 @@ class Metasploit3 < Msf::Post
     # Make sure the extension is loaded.
     if load_extapi
       domain = get_domain
-      if (!domain.nil?)
+      if !domain.nil?
 
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
@@ -44,23 +46,29 @@ class Metasploit3 < Msf::Post
             'SAMAccount',
             'Email',
             'Comment',
-            'PrimaryGroupID',
-            'DistinguishedName'
+            'Primary Group ID',
+            'Distinguished Name'
           ]
         )
-        filter =   "(&(sAMAccountType=805306368)(lockoutTime>=1))"
+        filter =   '(&(sAMAccountType=805306368)(lockoutTime>=1))'
         query_result = session.extapi.adsi.domain_query(domain,
                                                         filter,
                                                         datastore['MAX_SEARCH'],
                                                         datastore['MAX_SEARCH'],
-                                                        ["samaccountname",'mail','comment','primarygroupid','distinguishedname']
+                                                        [
+                                                          'samaccountname',
+                                                          'mail',
+                                                          'comment',
+                                                          'primarygroupid',
+                                                          'distinguishedname'
+                                                        ]
                                                       )
         if query_result[:results].empty?
-          print_status "No results where found."
+          print_status 'No results where found.'
         end
 
         query_result[:results].each do |obj|
-           table << obj
+          table << obj
         end
         table.print
         print_line
@@ -73,23 +81,23 @@ class Metasploit3 < Msf::Post
     end
   end
 
-  def get_domain()
+  def get_domain
     domain = nil
     begin
-      subkey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Group Policy\\History"
-      v_name = "DCName"
+      subkey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\History'
+      v_name = 'DCName'
       domain_dc = registry_getvaldata(subkey, v_name)
     rescue
-      print_error("Could not determine if the host is part of a domain.")
+      print_error('Could not determine if the host is part of a domain.')
       return nil
     end
-    if (!domain_dc.nil?)
+    if !domain_dc.nil?
       # leys parse the information
       dom_info =  domain_dc.split('.')
       domain = dom_info[1].upcase
     else
-      print_status "Host is not part of a domain."
+      print_status 'Host is not part of a domain.'
     end
-    return domain
+    domain
   end
 end

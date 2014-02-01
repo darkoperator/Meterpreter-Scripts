@@ -1,27 +1,31 @@
+# encoding: UTF-8
+
 require 'msf/core'
 require 'rex'
 require 'msf/core/auxiliary/report'
 
 class Metasploit3 < Msf::Post
-
   include Msf::Auxiliary::Report
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::ExtAPI
 
-  def initialize(info={})
-    super( update_info( info,
-        'Name'          => 'Windows Gather AD Enumerate Domain OU Membership',
-        'Description'   => %q{ This Module will perform an ADSI query and enumerate
+  def initialize(info = {})
+    super(update_info(
+          info,
+          'Name'          => 'Windows Gather AD Enumerate Domain OU Membership',
+          'Description'   => %q{ This Module will perform an ADSI query and enumerate
           all members of a Organizational Unit given its Distinguished Name on
           the domain the host is a member of through a Windows Meterpreter Session.},
-        'License'       => BSD_LICENSE,
-        'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
-        'Platform'      => [ 'win' ],
-        'SessionTypes'  => [ 'meterpreter']
+          'License'       => BSD_LICENSE,
+          'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
+          'Platform'      => 'win',
+          'SessionTypes'  => 'meterpreter'
       ))
     register_options(
       [
-        OptString.new('OU_DN', [true, 'Distinguished Name of the group or Organizational Unit to enumerate members.', nil]),
+        OptString.new('OU_DN', [true,
+                                'Distinguished Name of a Organizational Unit to enumerate members.',
+                                nil]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
         OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
@@ -34,7 +38,7 @@ class Metasploit3 < Msf::Post
     # Make sure the extension is loaded.
     if load_extapi
       domain = get_domain
-      if (!domain.nil?)
+      unless domain.nil?
 
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
@@ -44,35 +48,40 @@ class Metasploit3 < Msf::Post
           [
             'Name',
             'SAMAccount',
-            'DistinguishedName',
+            'Distinguished Name',
             'Type'
           ]
         )
 
-        filter =   "(|(&(objectCategory=person)(objectClass=user))(objectClass=computer)(objectClass=group)(objectClass=organizationalUnit))"
+        filter =   '(|(&(objectCategory=person)(objectClass=user))(objectClass=computer)(objectClass=group)(objectClass=organizationalUnit))'
         query_result = session.extapi.adsi.domain_query(datastore['OU_DN'],
                                                         filter,
                                                         datastore['MAX_SEARCH'],
                                                         datastore['MAX_SEARCH'],
-                                                        ["name", "samaccountname","distinguishedname",'objectcategory']
+                                                        [
+                                                          'name',
+                                                          'samaccountname',
+                                                          'distinguishedname',
+                                                          'objectcategory']
                                                       )
         if query_result[:results].empty?
-          print_status "No results where found."
+          print_status 'No results where found.'
+          return
         end
 
         query_result[:results].each do |obj|
 
           # Identify the object type
-          objtype = ""
+          objtype = ''
           case obj[3].to_s
           when /^CN=Person*/
-            objtype = "User"
+            objtype = 'User'
           when /^CN=Computer/
-            objtype = "Computer"
+            objtype = 'Computer'
           when /^CN=Group*/
-            objtype = "Group"
+            objtype = 'Group'
           when /^CN=Organizational-Unit*/
-            objtype = "OU"
+            objtype = 'OU'
           end
 
           table << [obj[0], obj[1], obj[2], objtype]
@@ -89,23 +98,23 @@ class Metasploit3 < Msf::Post
     end
   end
 
-  def get_domain()
+  def get_domain
     domain = nil
     begin
-      subkey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Group Policy\\History"
-      v_name = "DCName"
+      subkey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\History'
+      v_name = 'DCName'
       domain_dc = registry_getvaldata(subkey, v_name)
     rescue
-      print_error("Could not determine if the host is part of a domain.")
+      print_error('Could not determine if the host is part of a domain.')
       return nil
     end
-    if (!domain_dc.nil?)
-      # leys parse the information
+    if !domain_dc.nil?
+      # Parse the information
       dom_info =  domain_dc.split('.')
       domain = dom_info[1].upcase
     else
-      print_status "Host is not part of a domain."
+      print_status 'Host is not part of a domain.'
     end
-    return domain
+    domain
   end
 end

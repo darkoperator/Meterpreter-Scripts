@@ -1,35 +1,40 @@
+# encoding: UTF-8
+
 require 'msf/core'
 require 'rex'
 require 'msf/core/auxiliary/report'
 
 class Metasploit3 < Msf::Post
-
   include Msf::Auxiliary::Report
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::ExtAPI
 
-  def initialize(info={})
-    super( update_info( info,
-        'Name'          => 'Windows Gather AD Enumerate Domain User Accounts',
-        'Description'   => %q{ This Module will perform an ADSI query and enumerate
-          domain users and can filter depending on User Account Control Parameters
-          on the domain the host is a member of through a Windows Meterpreter Session.},
-        'License'       => BSD_LICENSE,
-        'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
-        'Platform'      => [ 'win' ],
-        'SessionTypes'  => [ 'meterpreter']
+  def initialize(info = {})
+    super(update_info(info,
+                      'Name'          => 'Windows Gather AD Enumerate Domain User Accounts',
+                      'Description'   => %q{ This Module will perform an ADSI query and enumerate
+                        domain users and can filter depending on User Account Control Parameters
+                        on the domain the host is a member of through a Windows Meterpreter
+                        Session.},
+                      'License'       => BSD_LICENSE,
+                      'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
+                      'Platform'      => 'win',
+                      'SessionTypes'  => 'meterpreter'
       ))
     register_options(
       [
         OptBool.new('EXCLUDE_LOCKED', [true, 'Exclude in search locked accounts..', false]),
         OptBool.new('EXCLUDE_DISABLED', [true, 'Exclude from search disabled accounts.', false]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
-        OptEnum.new('UAC', [true, 'Filter on User Account Control Setting.', 'ANY', ['ANY',
-          'NO_PASSWORD',
-          'CHANGE_PASSWORD',
-          'NEVER_EXPIRES',
-          'SMARTCARD_REQUIRED',
-          'NEVER_LOGGEDON']]),
+        OptEnum.new('UAC', [true,
+                            'Filter on User Account Control Setting.',
+                            'ANY', [
+                                      'ANY',
+                                      'NO_PASSWORD',
+                                      'CHANGE_PASSWORD',
+                                      'NEVER_EXPIRES',
+                                      'SMARTCARD_REQUIRED',
+                                      'NEVER_LOGGEDON']]),
         OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
   end
@@ -41,7 +46,7 @@ class Metasploit3 < Msf::Post
     # Make sure the extension is loaded.
     if load_extapi
       domain = get_domain
-      if (!domain.nil?)
+      unless domain.nil?
 
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
@@ -52,11 +57,12 @@ class Metasploit3 < Msf::Post
             'SAMAccount',
             'Email',
             'Comment',
-            'PrimaryGroupID',
-            'DistinguishedName'
+            'Primary Group ID',
+            'Distinguished Name'
           ]
         )
-        inner_filter = "(sAMAccountType=805306368)"
+        inner_filter = '(sAMAccountType=805306368)'
+
         if datastore['EXCLUDE_LOCKED']
           inner_filter = "#{inner_filter}(!(lockoutTime>=1))"
         end
@@ -91,43 +97,48 @@ class Metasploit3 < Msf::Post
                                                         filter,
                                                         datastore['MAX_SEARCH'],
                                                         datastore['MAX_SEARCH'],
-                                                        ["samaccountname",'mail','comment','primarygroupid','distinguishedname']
+                                                        ['samaccountname',
+                                                         'mail',
+                                                         'comment',
+                                                         'primarygroupid',
+                                                         'distinguishedname']
                                                       )
         if query_result[:results].empty?
-          print_status "No results where found."
+          print_status 'No results where found.'
+          return
         end
 
         query_result[:results].each do |obj|
-           table << obj
+          table << obj
         end
         table.print
         print_line
 
         if datastore['STORE_LOOT']
-          stored_path = store_loot('ad.locked_users', 'text/plain', session, table.to_csv)
+          stored_path = store_loot('ad.users', 'text/plain', session, table.to_csv)
           print_status("Results saved to: #{stored_path}")
         end
       end
     end
   end
 
-  def get_domain()
+  def get_domain
     domain = nil
     begin
-      subkey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Group Policy\\History"
-      v_name = "DCName"
+      subkey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\History'
+      v_name = 'DCName'
       domain_dc = registry_getvaldata(subkey, v_name)
     rescue
-      print_error("Could not determine if the host is part of a domain.")
+      print_error('Could not determine if the host is part of a domain.')
       return nil
     end
-    if (!domain_dc.nil?)
+    if !domain_dc.nil?
       # leys parse the information
       dom_info =  domain_dc.split('.')
       domain = dom_info[1].upcase
     else
-      print_status "Host is not part of a domain."
+      print_status 'Host is not part of a domain.'
     end
-    return domain
+    domain
   end
 end

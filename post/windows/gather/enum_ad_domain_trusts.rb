@@ -1,22 +1,24 @@
+# encoding: UTF-8
+
 require 'msf/core'
 require 'rex'
 require 'msf/core/auxiliary/report'
 
 class Metasploit3 < Msf::Post
-
   include Msf::Auxiliary::Report
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::ExtAPI
 
-  def initialize(info={})
-    super( update_info( info,
-        'Name'          => 'Windows Gather AD Enumerate Domain Security Groups',
-        'Description'   => %q{ This Module will perform an ADSI query and enumerate all Domain Security Groups
-          on the domain the host is a member of through a Windows Meterpreter Session.},
-        'License'       => BSD_LICENSE,
-        'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
-        'Platform'      => [ 'win' ],
-        'SessionTypes'  => [ 'meterpreter']
+  def initialize(info = {})
+    super(update_info(
+          info,
+          'Name'          => 'Windows Gather AD Enumerate Domain Trusts',
+          'Description'   => %q{ This Module will perform an ADSI query and
+          enumerate all Domain Trusts on the domain},
+          'License'       => BSD_LICENSE,
+          'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
+          'Platform'      => 'win',
+          'SessionTypes'  => 'meterpreter'
       ))
     register_options(
       [
@@ -31,8 +33,8 @@ class Metasploit3 < Msf::Post
 
     # Make sure the extension is loaded.
     if load_extapi
-      domain = get_domain
-      if (!domain.nil?)
+      domain = check_domain
+      unless domain.nil?
 
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
@@ -41,29 +43,66 @@ class Metasploit3 < Msf::Post
           'Columns' =>
           [
             'Name',
-            'DistinguishedName'
+            'NetBIOS Name',
+            'Trust Direction',
+            'Trust Type'
           ]
         )
 
-        filter =   '(groupType:1.2.840.113556.1.4.803:=2147483648)'
-        query_result = session.extapi.adsi.domain_query(domain,
-                                                        filter,
-                                                        datastore['MAX_SEARCH'],
-                                                        datastore['MAX_SEARCH'],
-                                                        ["name", "distinguishedname"]
-                                                      )
+        filter =   '(objectClass=trustedDomain)'
+        query_result = session.extapi.adsi.domain_query(
+                         domain,
+                         filter,
+                         datastore['MAX_SEARCH'],
+                         datastore['MAX_SEARCH'],
+                         ['TrustPartner',
+                          'flatName',
+                          'trustDirection',
+                          'trustType'
+                        ]
+                       )
         if query_result[:results].empty?
-          print_status "No results where found."
+          print_status 'No results where found.'
+          return
         end
 
         query_result[:results].each do |obj|
-          table << obj
+
+          # Case for Trust Direction
+          case obj[2]
+          when '0'
+            trust_direction = 'Disabled'
+          when '1'
+            trust_direction = 'Inbound trust'
+          when '2'
+            trust_direction = 'Outbound trust'
+          when '3'
+            trust_direction = 'Two-way trust'
+          end
+
+          # Case for trust type
+          case obj[3]
+          when '1'
+            trust_type = 'Downlevel Trust'
+          when '2'
+            trust_type = 'Windows 2000 (Uplevel) Trust'
+          when '3'
+            trust_type = 'MIT'
+          when '4'
+            trust_type = 'DCE'
+          end
+
+          table << [obj[0], obj[1], trust_direction, trust_type]
         end
         table.print
         print_line
 
         if datastore['STORE_LOOT']
-          stored_path = store_loot('ad.groups', 'text/plain', session, table.to_csv)
+          stored_path = store_loot(
+                          'ad.trusts',
+                          'text/plain',
+                          session,
+                          table.to_csv)
           print_status("Results saved to: #{stored_path}")
         end
 
@@ -71,23 +110,23 @@ class Metasploit3 < Msf::Post
     end
   end
 
-  def get_domain()
+  def check_domain
     domain = nil
     begin
-      subkey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Group Policy\\History"
-      v_name = "DCName"
+      subkey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\History'
+      v_name = 'DCName'
       domain_dc = registry_getvaldata(subkey, v_name)
     rescue
-      print_error("Could not determine if the host is part of a domain.")
+      print_error('Could not determine if the host is part of a domain.')
       return nil
     end
-    if (!domain_dc.nil?)
+    if !domain_dc.nil?
       # leys parse the information
       dom_info =  domain_dc.split('.')
       domain = dom_info[1].upcase
     else
-      print_status "Host is not part of a domain."
+      print_status 'Host is not part of a domain.'
     end
-    return domain
+    domain
   end
 end
