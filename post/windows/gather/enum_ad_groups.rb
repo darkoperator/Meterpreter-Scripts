@@ -24,7 +24,16 @@ class Metasploit3 < Msf::Post
     register_options(
       [
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
-        OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
+        OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100]),
+        OptEnum.new('GROUP_TYPE', [true,
+                            'Filter security groupt type.',
+                            'ANY', [
+                                      'ANY',
+                                      'BUILTIN',
+                                      'UNIVERSAL',
+                                      'GLOBAL'
+                                   ]
+                                  ]),
       ], self.class)
   end
 
@@ -44,17 +53,36 @@ class Metasploit3 < Msf::Post
           'Columns' =>
           [
             'Name',
-            'Distinguished Name'
+            'Distinguished Name',
+            'Description',
+            'Member Of'
           ]
         )
 
-        filter =   '(groupType:1.2.840.113556.1.4.803:=2147483648)'
+        case datastore['GROUP_TYPE']
+        when 'ANY'
+          filter =   '(groupType:1.2.840.113556.1.4.803:=2147483648)'
+
+        when 'BUILTIN'
+          filter =   '(groupType:1.2.840.113556.1.4.803:=2147483649)'
+
+        when 'UNIVERSAL'
+          filter =   '(groupType:1.2.840.113556.1.4.803:=2147483656)'
+
+        when 'GLOBAL'
+          filter =   '(groupType:1.2.840.113556.1.4.803:=2147483650)'
+        end
+
         query_result = session.extapi.adsi.domain_query(
                          domain,
                          filter,
                          datastore['MAX_SEARCH'],
                          datastore['MAX_SEARCH'],
-                         ['name', 'distinguishedname']
+                         ['name',
+                          'distinguishedname',
+                          'description',
+                          'memberof'
+                        ]
                         )
         if query_result[:results].empty?
           print_status 'No results where found.'
@@ -63,9 +91,12 @@ class Metasploit3 < Msf::Post
 
         query_result[:results].each do |obj|
           table << obj
+          print_good "Name: #{obj[0]}"
+          print_good "Distinguished Name: #{obj[1]}"
+          print_good "Description: #{obj[2]}"
+          print_good "Member Of: #{obj[3]}"
+          print_line
         end
-        table.print
-        print_line
 
         if datastore['STORE_LOOT']
           stored_path = store_loot('ad.groups', 'text/plain', session, table.to_csv)
