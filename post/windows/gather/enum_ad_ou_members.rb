@@ -34,67 +34,73 @@ class Metasploit3 < Msf::Post
   # Run Method for when run command is issued
   def run
     print_status("Running module against #{sysinfo['Computer']}")
+    if datastore['OU_DN'] =~ /^OU=*/
+      # Make sure the extension is loaded.
+      if load_extapi
+        domain = get_domain
+        unless domain.nil?
 
-    # Make sure the extension is loaded.
-    if load_extapi
-      domain = get_domain
-      unless domain.nil?
+          table = Rex::Ui::Text::Table.new(
+            'Indent' => 4,
+            'SortIndex' => -1,
+            'Width' => 80,
+            'Columns' =>
+            [
+              'Name',
+              'SAMAccount',
+              'Distinguished Name',
+              'Type'
+            ]
+          )
 
-        table = Rex::Ui::Text::Table.new(
-          'Indent' => 4,
-          'SortIndex' => -1,
-          'Width' => 80,
-          'Columns' =>
-          [
-            'Name',
-            'SAMAccount',
-            'Distinguished Name',
-            'Type'
-          ]
-        )
-
-        filter =   '(|(&(objectCategory=person)(objectClass=user))(objectClass=computer)(objectClass=group)(objectClass=organizationalUnit))'
-        query_result = session.extapi.adsi.domain_query(datastore['OU_DN'],
-                                                        filter,
-                                                        datastore['MAX_SEARCH'],
-                                                        datastore['MAX_SEARCH'],
-                                                        [
-                                                          'name',
-                                                          'samaccountname',
-                                                          'distinguishedname',
-                                                          'objectcategory']
-                                                      )
-        if query_result[:results].empty?
-          print_status 'No results where found.'
-          return
-        end
-
-        query_result[:results].each do |obj|
-
-          # Identify the object type
-          objtype = ''
-          case obj[3].to_s
-          when /^CN=Person*/
-            objtype = 'User'
-          when /^CN=Computer/
-            objtype = 'Computer'
-          when /^CN=Group*/
-            objtype = 'Group'
-          when /^CN=Organizational-Unit*/
-            objtype = 'OU'
+          filter =   '(|(&(objectCategory=person)(objectClass=user))(objectClass=computer)(objectClass=group)(objectClass=organizationalUnit))'
+          query_result = session.extapi.adsi.domain_query(datastore['OU_DN'],
+                                                          filter,
+                                                          datastore['MAX_SEARCH'],
+                                                          datastore['MAX_SEARCH'],
+                                                          [
+                                                            'name',
+                                                            'samaccountname',
+                                                            'distinguishedname',
+                                                            'objectcategory']
+                                                        )
+          if query_result[:results].empty?
+            print_status 'No results where found.'
+            return
           end
 
-          table << [obj[0], obj[1], obj[2], objtype]
-        end
-        table.print
-        print_line
+          query_result[:results].each do |obj|
 
-        if datastore['STORE_LOOT']
-          stored_path = store_loot('ad.ou_members', 'text/plain', session, table.to_csv)
-          print_status("Results saved to: #{stored_path}")
-        end
+            # Identify the object type
+            objtype = ''
+            case obj[3].to_s
+            when /^CN=Person*/
+              objtype = 'User'
 
+            when /^CN=Computer/
+              objtype = 'Computer'
+
+            when /^CN=Group*/
+              objtype = 'Group'
+
+            when /^CN=Organizational-Unit*/
+              objtype = 'OU'
+            end
+
+            table << [obj[0], obj[1], obj[2], objtype]
+          end
+          table.print
+          print_line
+
+          if datastore['STORE_LOOT']
+            stored_path = store_loot('ad.ou_members', 'text/plain', session, table.to_csv)
+            print_status("Results saved to: #{stored_path}")
+          end
+
+        end
       end
+    else
+      print_error "Distinguished Name provided is not for an Organizational Unit."
     end
   end
 
