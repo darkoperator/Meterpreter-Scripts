@@ -12,7 +12,7 @@ class Metasploit3 < Msf::Post
   def initialize(info = {})
     super(update_info(
         info,
-        'Name'          => 'Windows Gather AD Enumerate Domain Grooup Membership',
+        'Name'          => 'Windows Gather AD Enumerate Domain Group Membership',
         'Description'   => %q{ This Module will perform an ADSI query and
           enumerate all members of a given security group given its
           Distinguished Name on the domain the host is a member of

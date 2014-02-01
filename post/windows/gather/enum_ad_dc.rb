@@ -46,8 +46,8 @@ class Metasploit3 < Msf::Post
           'SortIndex' => -1,
           'Columns' =>
           [
-            'Hostname',
-            'Addess',
+            'HostName',
+            'Address',
             'OS',
             'SP'
           ]

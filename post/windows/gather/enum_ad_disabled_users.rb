@@ -101,7 +101,7 @@ class Metasploit3 < Msf::Post
     end
 
     if !domain_dc.nil?
-      # leys parse the information
+      # lets parse the information
       dom_info =  domain_dc.split('.')
       domain = dom_info[1].upcase
     else

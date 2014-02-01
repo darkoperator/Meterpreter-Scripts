@@ -13,7 +13,7 @@ class Metasploit3 < Msf::Post
           info,
           'Name'          => 'Windows Gather AD Enumerate Domain Organizational Units',
           'Description'   => %q{ This Module will perform an ADSI query and enumerate all
-            Orgabizational Units on the domain the host is a member of through a Windows
+            Organizational Units on the domain the host is a member of through a Windows
             Meterpreter Session.},
           'License'       => BSD_LICENSE,
           'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
@@ -85,7 +85,7 @@ class Metasploit3 < Msf::Post
       return nil
     end
     if !domain_dc.nil?
-      # leys parse the information
+      # lets parse the information
       dom_info =  domain_dc.split('.')
       domain = dom_info[1].upcase
     else

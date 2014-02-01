@@ -11,7 +11,7 @@ class Metasploit3 < Msf::Post
 
   def initialize(info = {})
     super(update_info(info,
-                      'Name'          => 'Windows Gather AD Enumerate Domain Group Memebership',
+                      'Name'          => 'Windows Gather AD Enumerate Domain Group Membership',
                       'Description'   => %q{ This Module will perform an ADSI query and enumerate
                         group membership for a given user on the domain the host is a member
                         of through a Windows Meterpreter Session.},
@@ -78,7 +78,7 @@ class Metasploit3 < Msf::Post
       return nil
     end
     if !domain_dc.nil?
-      # leys parse the information
+      # lets parse the information
       dom_info =  domain_dc.split('.')
       domain = dom_info[1].upcase
     else

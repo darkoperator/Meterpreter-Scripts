@@ -26,7 +26,7 @@ class Metasploit3 < Msf::Post
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
         OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100]),
         OptEnum.new('GROUP_TYPE', [true,
-                            'Filter security groupt type.',
+                            'Filter security group type.',
                             'ANY', [
                                       'ANY',
                                       'BUILTIN',

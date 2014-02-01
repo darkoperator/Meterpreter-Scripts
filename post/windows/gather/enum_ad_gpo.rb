@@ -109,7 +109,7 @@ class Metasploit3 < Msf::Post
           print_good "USer Extensions: #{obj[6]}"
           print_line ''
 
-          # Initialize WMI fileds for loot
+          # Initialize WMI fields for loot
           wmifilter_name = ''
           wmifilter_id = ''
           wmifilter_description = ''
