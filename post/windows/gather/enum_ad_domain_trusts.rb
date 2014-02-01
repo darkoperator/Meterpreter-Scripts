@@ -83,11 +83,11 @@ class Metasploit3 < Msf::Post
           # Case for trust type
           case obj[3]
           when '1'
-            trust_type = 'Downlevel Trust'
+            trust_type = 'Down Level, Windows Domain not running AD'
           when '2'
-            trust_type = 'Windows 2000 (Uplevel) Trust'
+            trust_type = 'Up Level, Windows Domain running AD'
           when '3'
-            trust_type = 'MIT'
+            trust_type = 'MIT, None Windows RFC4120-compliant Kerberos'
           when '4'
             trust_type = 'DCE'
           end
