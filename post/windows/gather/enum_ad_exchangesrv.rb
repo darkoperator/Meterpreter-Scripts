@@ -45,7 +45,12 @@ class Metasploit3 < Msf::Post
 
   def run
     if load_extapi
-      domain_dn = get_default_naming_context
+      begin
+        domain_dn = get_default_naming_context
+      rescue
+        print_error('This host appears to not be part of a domain.')
+        return
+      end
 
       table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
@@ -57,57 +62,53 @@ class Metasploit3 < Msf::Post
           ]
         )
 
-      if domain_dn
-        domain = 'CN=Microsoft Exchange,CN=Services,CN=Configuration,' + domain_dn
+      domain = 'CN=Microsoft Exchange,CN=Services,CN=Configuration,' + domain_dn
 
-        inner_filter = '(objectCategory=msExchExchangeServer)'
-        case datastore['ROLE']
+      inner_filter = '(objectCategory=msExchExchangeServer)'
+      case datastore['ROLE']
 
-        when 'ANY'
-          role = 'any role'
-          inner_filter = "#{inner_filter}"
+      when 'ANY'
+        role = 'any role'
+        inner_filter = "#{inner_filter}"
 
-        when 'MAILBOX'
-          role = 'Mailbox Server Role'
-          inner_filter = "(#{inner_filter}((msExchCurrentServerRoles:1.2.840.113556.1.4.803:=2)"
+      when 'MAILBOX'
+        role = 'Mailbox Server Role'
+        inner_filter = "(#{inner_filter}((msExchCurrentServerRoles:1.2.840.113556.1.4.803:=2)"
 
-        when 'CAS'
-          role = 'Client Access Role'
-          inner_filter = "(#{inner_filter})(msExchCurrentServerRoles:1.2.840.113556.1.4.803:=4)"
+      when 'CAS'
+        role = 'Client Access Role'
+        inner_filter = "(#{inner_filter})(msExchCurrentServerRoles:1.2.840.113556.1.4.803:=4)"
 
-        when 'UNIFIED'
-          role = 'Unified Messaging Role'
-          inner_filter = "(#{inner_filter})(msExchCurrentServerRoles:1.2.840.113556.1.4.803:=16)"
+      when 'UNIFIED'
+        role = 'Unified Messaging Role'
+        inner_filter = "(#{inner_filter})(msExchCurrentServerRoles:1.2.840.113556.1.4.803:=16)"
 
-        when 'HUB'
-          role = 'Hub Transport Role'
-          inner_filter = "(#{inner_filter})(msExchCurrentServerRoles:1.2.840.113556.1.4.803:=32)"
+      when 'HUB'
+        role = 'Hub Transport Role'
+        inner_filter = "(#{inner_filter})(msExchCurrentServerRoles:1.2.840.113556.1.4.803:=32)"
 
-        when 'EDGE'
-          role = 'Edge Transport Role'
-          inner_filter = "(#{inner_filter})(msExchCurrentServerRoles:1.2.840.113556.1.4.803:=64)"
+      when 'EDGE'
+        role = 'Edge Transport Role'
+        inner_filter = "(#{inner_filter})(msExchCurrentServerRoles:1.2.840.113556.1.4.803:=64)"
+      end
+
+      filter =   "(&#{inner_filter})"
+      print_status("Performing query for MS Exchange server with #{role}")
+      query_result = session.extapi.adsi.domain_query(
+                         domain,
+                         filter,
+                         datastore['MAX_SEARCH'],
+                         datastore['MAX_SEARCH'],
+                         ["name", "SerialNumber", "cn"]
+                       )
+      if query_result[:results].length > 0
+        query_result[:results].each do |obj|
+          table << obj
         end
-
-        filter =   "(&#{inner_filter})"
-        print_status("Performing query for MS Exchange server with #{role}")
-        query_result = session.extapi.adsi.domain_query(
-                           domain,
-                           filter,
-                           datastore['MAX_SEARCH'],
-                           datastore['MAX_SEARCH'],
-                           ["name", "SerialNumber", "cn"]
-                         )
-        if query_result[:results].length > 0
-          query_result[:results].each do |obj|
-            table << obj
-          end
-          table.print
-          print_line
-        else
-          print_status("No MS Exchange entries with #{role} found.")
-        end
+        table.print
+        print_line
       else
-        print_error('This host does not appear to be in a Domain.')
+        print_status("No MS Exchange entries with #{role} found.")
       end
     end
   end
