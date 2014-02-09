@@ -75,9 +75,9 @@ class Metasploit3 < Msf::Post
                           'gPCUserExtensionNames']
                        )
         query_result[:results].each do |obj|
-          linked_ous = get_lineked_ou(domain, obj[0])
+          linked_ous = get_lineked_to(domain, obj[0])
 
-          # Check if only linked OUs are desired and process.
+          # Check if only linked GPOs are desired and process.
           next if linked_ous.length == 0 && datastore['LINKED']
 
           print_good "Id: #{obj[0]}"
@@ -181,7 +181,7 @@ class Metasploit3 < Msf::Post
 
   def get_wmifilters(domain)
     # Collect all WMI filters since we will need then to match found GPOs
-    vprint_status 'Emumerating all WMI Filters'
+    vprint_status 'Enumerating all WMI Filters'
     wmi_filters = []
     wmi_mswmi_filter = '(objectClass=msWMI-Som)'
     wmi_fileds = ['msWMI-ID', 'msWMI-Name', 'msWMI-Parm1', 'msWMI-Parm2']
@@ -207,7 +207,7 @@ class Metasploit3 < Msf::Post
     wmi_filters
   end
 
-  def get_lineked_ou(domain, ou_id)
+  def get_lineked_to(domain, ou_id)
     ou_search_filter = "(&(objectclass=organizationalunit)(gplink=*#{ou_id}*))"
     linked_ous = []
 
