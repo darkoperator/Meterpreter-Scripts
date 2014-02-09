@@ -43,7 +43,9 @@ class Metasploit3 < Msf::Post
           'Columns' =>
           [
             'Name',
-            'Distinguished Name'
+            'Distinguished Name',
+            'gPLink',
+            'gPOptions'
           ]
         )
 
@@ -52,18 +54,45 @@ class Metasploit3 < Msf::Post
                                                         filter,
                                                         datastore['MAX_SEARCH'],
                                                         datastore['MAX_SEARCH'],
-                                                        ['name', 'distinguishedname']
+                                                        [
+                                                          'name',
+                                                          'distinguishedname',
+                                                          'gPLink',
+                                                          'gPOptions'
+                                                        ]
                                                       )
+        # Process each OU
         if query_result[:results].empty?
           print_status 'No results where found.'
           return
         end
+        gpos = enumerate_gpo_basic_info(domain)
 
         query_result[:results].each do |obj|
-          table << obj
-        end
-        table.print
+          print_good("Name: #{obj[0]}")
+          print_good("DN: #{obj[1]}")
+          if obj[2].length > 0
+            print_good("Linked GPOs:")
+            first, *gpos_dn = obj[2].gsub(']','').split('[LDAP://')
+            gpos_dn.each do |gpo|
+              dn, enforced = gpo.split(';')
+              if enforced == '0'
+                state = 'Not Enforced'
+              elsif enforced == '2'
+                state = 'Enforced'
+              end
+              id = dn.match(/({\w*-\w*-\w*-\w*-\w*})/)[0]
+              matched_gpo = gpos.select { |mgpo| mgpo[:name] == id }
+              print_good("\tGPO Name: #{matched_gpo[0][:display_name]}")
+              print_good("\tGPO DN: #{dn}")
+              print_good("\tState: #{state}")
+              print_good
+            end
+          end
         print_line
+        end
+        #table.print
+        #print_line
 
         if datastore['STORE_LOOT']
           stored_path = store_loot('ad.ou', 'text/plain', session, table.to_csv)
@@ -92,5 +121,28 @@ class Metasploit3 < Msf::Post
       print_status 'Host is not part of a domain.'
     end
     domain
+  end
+
+  def enumerate_gpo_basic_info(domain)
+    vprint_status 'Enumerating all GPOs to identified linked values'
+    gpo_list = []
+    gpo_filter =   '(objectClass=groupPolicyContainer)'
+    gpo_query_result = session.extapi.adsi.domain_query(
+                       domain,
+                       gpo_filter,
+                       0,
+                       0,
+                       ['name',
+                        'displayname',
+                       ]
+                     )
+    gpo_query_result[:results].each do |gpo_obj|
+      gpo_info = {
+        :name => gpo_obj[0],
+        :display_name => gpo_obj[1]
+      }
+      gpo_list << gpo_info
+    end
+    gpo_list
   end
 end
