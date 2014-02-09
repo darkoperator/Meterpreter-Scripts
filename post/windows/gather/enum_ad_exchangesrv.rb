@@ -24,6 +24,7 @@ class Metasploit3 < Msf::Post
         'Platform'      => 'win',
         'SessionTypes'  => 'meterpreter'
       ))
+    # Remove unneeded options
     options.remove_option('FIELDS')
     options.remove_option('DOMAIN')
     options.remove_option('FILTER')
@@ -38,12 +39,15 @@ class Metasploit3 < Msf::Post
                                       'CAS',
                                       'UNIFIED',
                                       'HUB',
-                                      'EDGE']]),
+                                      'EDGE'
+                                    ]
+                          ]),
 
     ], self.class)
   end
 
   def run
+    print_status("Running module against #{sysinfo['Computer']}")
     if load_extapi
       begin
         domain_dn = get_default_naming_context
@@ -107,6 +111,12 @@ class Metasploit3 < Msf::Post
         end
         table.print
         print_line
+
+        if datastore['STORE_LOOT']
+          stored_path = store_loot('ad.exchange.servers', 'text/plain', session, table.to_csv)
+          print_status("Results saved to: #{stored_path}")
+        end
+
       else
         print_status("No MS Exchange entries with #{role} found.")
       end
