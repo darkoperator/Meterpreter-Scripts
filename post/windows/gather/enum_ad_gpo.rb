@@ -83,7 +83,7 @@ class Metasploit3 < Msf::Post
           print_good "Id: #{obj[0]}"
           print_good "Name: #{obj[1]}"
           print_good "Location: #{obj[2]}"
-          print_good "Linked OUs: #{linked_ous.join("; ")}"
+          print_good "Linked To: #{linked_ous.join("; ")}"
           linked_ou_found = linked_ous.join('; ')
 
           case obj[4]
