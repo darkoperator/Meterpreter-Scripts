@@ -51,11 +51,12 @@ class Metasploit3 < Msf::Post
           'Width' => 80,
           'Columns' =>
           [
-            'name',
-            'distinguishedname',
-            'dnshostname',
-            'operatingsystem',
-            'operatingSystemServicePack'
+            'Name',
+            'Distinguished Name',
+            'FQDN',
+            'Operating System',
+            'Service Pack',
+            'Address'
           ]
         )
 
@@ -76,13 +77,51 @@ class Metasploit3 < Msf::Post
                        )
       if query_result[:results].length > 0
         query_result[:results].each do |obj|
-          table << obj
+          # Resolve IPv4 address
+          begin
+            ipv4_info = session.net.resolve.resolve_host(obj[2], AF_INET)
+            table << [obj[0], obj[1], obj[2], obj[3],obj[4],ipv4_info[:ip]]
+
+            service_pack = obj[4].gsub('Service Pack', 'SP')
+            # Save found DC in the database
+            report_host(
+                :host      => ipv4_info[:ip],
+                :os_name   => 'Windows',
+                :os_flavor => obj[3],
+                :name      => obj[0],
+                :purpose   => 'server',
+                :comments  => 'MS SQL Server',
+                :os_sp     => service_pack
+            )
+          rescue
+            vprint_status 'Could not resolve IPv4 Address for Domain Controller'
+          end
+
+          # Resolve IPv6 address
+          begin
+            ipv6_info = session.net.resolve.resolve_host(obj[2], AF_INET6)
+            table << [obj[0], obj[1], obj[2], obj[3],obj[4],ipv4_info[:ip]]
+
+            service_pack = obj[4].gsub('Service Pack', 'SP')
+            # Save found DC in the database
+            report_host(
+                :host      => ipv6_info[:ip],
+                :os_name   => 'Windows',
+                :os_flavor => obj[3],
+                :name      => obj[0],
+                :purpose   => 'server',
+                :comments  => 'MS SQL Server',
+                :os_sp     => service_pack
+            )
+          rescue
+            vprint_status 'Could not resolve IPv6 Address for Domain Controller'
+          end
         end
         table.print
         print_line
 
         if datastore['STORE_LOOT']
-          stored_path = store_loot('ad.exchange.servers', 'text/plain', session, table.to_csv)
+          stored_path = store_loot('ad.mssql.servers', 'text/plain', session, table.to_csv)
           print_status("Results saved to: #{stored_path}")
         end
 
