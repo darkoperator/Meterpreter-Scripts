@@ -23,6 +23,7 @@ class Metasploit3 < Msf::Post
       ))
     register_options(
       [
+        OptString.new('DOMAIN_DN', [false, 'DN of the domain to enumerate.', nil]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
         OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
@@ -35,8 +36,10 @@ class Metasploit3 < Msf::Post
     # Make sure the extension is loaded.
     if load_extapi
       domain = get_domain
-      if !domain.nil?
-
+      unless domain.nil?
+        unless datastore['DOMAIN_DN'].nil?
+          domain = datastore['DOMAIN_DN']
+        end
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
           'SortIndex' => -1,

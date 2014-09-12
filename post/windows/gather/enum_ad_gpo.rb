@@ -23,6 +23,7 @@ class Metasploit3 < Msf::Post
       ))
     register_options(
       [
+        OptString.new('DOMAIN_DN', [false, 'DN of the domain to enumerate.', nil]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
         OptBool.new('LINKED', [true, 'Show linked GPOs only.', true]),
         OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
@@ -37,6 +38,10 @@ class Metasploit3 < Msf::Post
     if load_extapi
       domain = get_domain
       unless domain.nil?
+
+        unless datastore['DOMAIN_DN'].nil?
+          domain = datastore['DOMAIN_DN']
+        end
 
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
@@ -75,15 +80,17 @@ class Metasploit3 < Msf::Post
                           'gPCUserExtensionNames']
                        )
         query_result[:results].each do |obj|
-          linked_ous = get_lineked_to(domain, obj[0])
+          linked_ous = get_lineked_to_ou(domain, obj[0])
+          linked_domain = get_lineked_to_domian(domain, obj[0])
 
           # Check if only linked GPOs are desired and process.
-          next if linked_ous.length == 0 && datastore['LINKED']
+          next if (linked_ous.length == 0 && linked_domain == 0) && datastore['LINKED']
 
           print_good "Id: #{obj[0]}"
           print_good "Name: #{obj[1]}"
           print_good "Location: #{obj[2]}"
-          print_good "Linked To: #{linked_ous.join("; ")}"
+          print_good "Linked To OU: #{linked_ous.join("; ")}"
+          print_good "Linked To Domain: #{linked_domain.join("; ")}"
           linked_ou_found = linked_ous.join('; ')
 
           case obj[4]
@@ -207,7 +214,7 @@ class Metasploit3 < Msf::Post
     wmi_filters
   end
 
-  def get_lineked_to(domain, ou_id)
+  def get_lineked_to_ou(domain, ou_id)
     ou_search_filter = "(&(objectclass=organizationalunit)(gplink=*#{ou_id}*))"
     linked_ous = []
 
@@ -224,5 +231,24 @@ class Metasploit3 < Msf::Post
     end
 
     linked_ous
+  end
+
+  def get_lineked_to_domian(domain, ou_id)
+    domain_search_filter = "(&(objectclass=domain)(gplink=*#{ou_id}*))"
+    linked_domains = []
+
+  domain_query_result = session.extapi.adsi.domain_query(
+                        domain,
+                        domain_search_filter,
+                        0,
+                        0,
+                        ['distinguishedname']
+                      )
+
+    domain_query_result[:results].each do |obj|
+      linked_domains << obj[0]
+    end
+
+    linked_domains
   end
 end

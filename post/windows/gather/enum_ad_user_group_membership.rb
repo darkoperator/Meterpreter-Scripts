@@ -10,15 +10,16 @@ class Metasploit3 < Msf::Post
   include Msf::Post::Windows::ExtAPI
 
   def initialize(info = {})
-    super(update_info(info,
-                      'Name'          => 'Windows Gather AD Enumerate Domain Group Membership',
-                      'Description'   => %q{ This Module will perform an ADSI query and enumerate
-                        group membership for a given user on the domain the host is a member
-                        of through a Windows Meterpreter Session.},
-                      'License'       => BSD_LICENSE,
-                      'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
-                      'Platform'      => 'win',
-                      'SessionTypes'  => 'meterpreter'
+    super(update_info(
+          info,
+          'Name'          => 'Windows Gather AD Enumerate Domain Group Membership',
+          'Description'   => %q{ This Module will perform an ADSI query and enumerate
+            group membership for a given user on the domain the host is a member
+            of through a Windows Meterpreter Session.},
+          'License'       => BSD_LICENSE,
+          'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
+          'Platform'      => 'win',
+          'SessionTypes'  => 'meterpreter'
       ))
     register_options(
       [
@@ -46,20 +47,27 @@ class Metasploit3 < Msf::Post
             'Group'
           ]
         )
-        filter =   "(&(objectClass=user)(samAccountName=#{datastore["SAMACCOUNT"]}))"
-        query_result = session.extapi.adsi.domain_query(domain,
-                                                        filter,
-                                                        1,
-                                                        1,
-                                                        ['memberof']
-                                                      )
+        filter =   "(&(sAMAccountType=805306368)(samAccountName=#{datastore["SAMACCOUNT"]}))"
+        query_result = session.extapi.adsi.domain_query(
+                         domain,
+                         filter,
+                         1,
+                         1,
+                         [
+                           'memberof',
+                           'primarygroupid'
+                         ]
+                       )
         if query_result[:results].empty?
           print_status 'No results where found.'
           return
         end
-
+        pp query_result
         query_result[:results].each do |obj|
-          table << obj
+          if obj[1] == '513'
+            print_line 'Domain User'
+          end
+          print_line "#{obj[0]}"
         end
         table.print
         print_line

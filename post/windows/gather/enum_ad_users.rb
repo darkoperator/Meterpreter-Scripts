@@ -23,6 +23,7 @@ class Metasploit3 < Msf::Post
       ))
     register_options(
       [
+        OptString.new('DOMAIN_DN', [false, 'DN of the domain to enumerate.', nil]),
         OptBool.new('EXCLUDE_LOCKED', [true, 'Exclude in search locked accounts..', false]),
         OptBool.new('EXCLUDE_DISABLED', [true, 'Exclude from search disabled accounts.', false]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
@@ -47,6 +48,10 @@ class Metasploit3 < Msf::Post
     if load_extapi
       domain = get_domain
       unless domain.nil?
+
+        unless datastore['DOMAIN_DN'].nil?
+          domain = datastore['DOMAIN_DN']
+        end
 
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
@@ -127,17 +132,18 @@ class Metasploit3 < Msf::Post
     begin
       subkey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\History'
       v_name = 'DCName'
-      domain_dc = registry_getvaldata(subkey, v_name)
+      key_vals = registry_enumvals(subkey)
+      if key_vals.include?(v_name)
+        domain_dc = registry_getvaldata(subkey, v_name)
+        # lets parse the information
+        dom_info =  domain_dc.split('.')
+        domain = dom_info[1].upcase
+      else
+        print_status 'Host is not part of a domain.'
+      end
     rescue
       print_error('Could not determine if the host is part of a domain.')
       return nil
-    end
-    if !domain_dc.nil?
-      # lets parse the information
-      dom_info =  domain_dc.split('.')
-      domain = dom_info[1].upcase
-    else
-      print_status 'Host is not part of a domain.'
     end
     domain
   end

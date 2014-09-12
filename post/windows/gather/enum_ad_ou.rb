@@ -22,6 +22,7 @@ class Metasploit3 < Msf::Post
       ))
     register_options(
       [
+        OptString.new('DOMAIN_DN', [false, 'DN of the domain to enumerate.', nil]),
         OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
         OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
       ], self.class)
@@ -35,7 +36,9 @@ class Metasploit3 < Msf::Post
     if load_extapi
       domain = get_domain
       unless domain.nil?
-
+        unless datastore['DOMAIN_DN'].nil?
+          domain = datastore['DOMAIN_DN']
+        end
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
           'SortIndex' => -1,
@@ -44,23 +47,23 @@ class Metasploit3 < Msf::Post
           [
             'Name',
             'Distinguished Name',
-            'gPLink',
-            'gPOptions'
+            'GP Links'
           ]
         )
 
         filter =   '(objectclass=organizationalunit)'
-        query_result = session.extapi.adsi.domain_query(domain,
-                                                        filter,
-                                                        datastore['MAX_SEARCH'],
-                                                        datastore['MAX_SEARCH'],
-                                                        [
-                                                          'name',
-                                                          'distinguishedname',
-                                                          'gPLink',
-                                                          'gPOptions'
-                                                        ]
-                                                      )
+        query_result = session.extapi.adsi.domain_query(
+                        domain,
+                        filter,
+                        datastore['MAX_SEARCH'],
+                        datastore['MAX_SEARCH'],
+                        [
+                          'name',
+                          'distinguishedname',
+                          'gPLink',
+                          'gPOptions'
+                        ]
+                      )
         # Process each OU
         if query_result[:results].empty?
           print_status 'No results where found.'
@@ -128,14 +131,14 @@ class Metasploit3 < Msf::Post
     gpo_list = []
     gpo_filter =   '(objectClass=groupPolicyContainer)'
     gpo_query_result = session.extapi.adsi.domain_query(
-                       domain,
-                       gpo_filter,
-                       0,
-                       0,
-                       ['name',
-                        'displayname',
-                       ]
-                     )
+                         domain,
+                         gpo_filter,
+                         0,
+                         0,
+                         ['name',
+                          'displayname',
+                         ]
+                       )
     gpo_query_result[:results].each do |gpo_obj|
       gpo_info = {
         :name => gpo_obj[0],
