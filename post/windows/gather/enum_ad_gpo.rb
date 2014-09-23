@@ -85,7 +85,7 @@ class Metasploit3 < Msf::Post
 
           # Check if only linked GPOs are desired and process.
           next if (linked_ous.length == 0 && linked_domain == 0) && datastore['LINKED']
-
+          print_line ""
           print_good "Id: #{obj[0]}"
           print_good "Name: #{obj[1]}"
           print_good "Location: #{obj[2]}"
@@ -114,7 +114,6 @@ class Metasploit3 < Msf::Post
 
           print_good "Machine Extensions: #{obj[5]}"
           print_good "USer Extensions: #{obj[6]}"
-          print_line ''
 
           # Initialize WMI fields for loot
           wmifilter_name = ''

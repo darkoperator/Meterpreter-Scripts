@@ -38,7 +38,7 @@ class Metasploit3 < Msf::Post
     # Make sure the extension is loaded.
     if load_extapi
       domain = get_domain
-      unless domain.nil
+      unless domain.nil?
 
         unless datastore['DOMAIN_DN'].nil?
           domain = datastore['DOMAIN_DN']

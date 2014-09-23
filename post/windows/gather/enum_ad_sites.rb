@@ -27,7 +27,7 @@ class Metasploit3 < Msf::Post
 
     register_options([
       OptString.new('DOMAIN_DN', [false, 'DN of the Forest Root to enumerate.', nil]),
-      OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
+      #OptBool.new('STORE_LOOT', [true, 'Store file in loot.', false]),
       OptInt.new('MAX_SEARCH', [false, 'Maximum values to retrieve, 0 for all.', 100])
 
     ], self.class)
@@ -89,6 +89,12 @@ class Metasploit3 < Msf::Post
               print_good("\tSite: #{obj[1]}")
               subnets << subnet
               print_good('')
+              puts "adding note for #{obj[0]}"
+              report_note(:host   => session,
+                :type   => 'ad.subnet',
+                :data   => { :subnet => obj[0],
+                             :site => obj[1]},
+                :update => :unique_data)
             end
           end
 
@@ -112,6 +118,12 @@ class Metasploit3 < Msf::Post
                 begin
                   ipv4_info = session.net.resolve.resolve_host(server[1], AF_INET)
                   print_good("\tIPv4: #{ipv4_info[:ip]}")
+                  report_host(
+                    :host      => ipv4_info[:ip],
+                    :name      => server[0],
+                    :purpose   => 'server',
+                    :comments  => 'Domain Controller'
+                  )
                 rescue
                   vprint_status("Could not resolve the IPv4 address of #{server[1]}")
                 end
@@ -120,6 +132,12 @@ class Metasploit3 < Msf::Post
                 begin
                   ipv6_info = session.net.resolve.resolve_host(server[1], AF_INET6)
                   print_good("\tIPv6: #{ipv6_info[:ip]}")
+                  report_host(
+                    :host      => ipv6_info[:ip],
+                    :name      => server[0],
+                    :purpose   => 'server',
+                    :comments  => 'Domain Controller'
+                  )
                 rescue
                   vprint_status("Could not resolve the IPv6 address of #{server[1]}")
                 end
@@ -132,10 +150,10 @@ class Metasploit3 < Msf::Post
           #table.print
           #print_line
 
-          if datastore['STORE_LOOT']
-            stored_path = store_loot('ad.exchange.servers', 'text/plain', session, table.to_csv)
-            print_status("Results saved to: #{stored_path}")
-          end
+          #if datastore['STORE_LOOT']
+          #  stored_path = store_loot('ad.exchange.servers', 'text/plain', session, table.to_csv)
+          #  print_status("Results saved to: #{stored_path}")
+          #end
 
         else
           print_status("No MS AD Sites configured.")

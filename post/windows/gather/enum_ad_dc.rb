@@ -88,6 +88,9 @@ class Metasploit3 < Msf::Post
             table << [dc[0], ipv4_info[:ip], dc[1], dc[2]]
 
             service_pack = dc[2].gsub('Service Pack', 'SP')
+            # TODO: add check so as to not stomp other comments 
+            # host = framework.db.find_or_create_host(:host => '10.10.10.3')
+            
             # Save found DC in the database
             report_host(
                 :host      => ipv4_info[:ip],

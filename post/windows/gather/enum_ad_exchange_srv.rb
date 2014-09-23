@@ -5,6 +5,7 @@ require 'msf/core'
 
 class Metasploit3 < Msf::Post
   include Msf::Auxiliary::Report
+  include Msf::Post::Windows::Registry
   include Msf::Post::Windows::ExtAPI
 
   def initialize(info = {})

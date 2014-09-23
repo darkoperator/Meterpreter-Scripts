@@ -25,7 +25,8 @@ class Metasploit3 < Msf::Post
       [
         OptString.new('SAMACCOUNT', [true,
                                      'SAM account name for the user to enumerate membership of.',
-                                     nil])
+                                     nil]),
+        OptString.new('DOMAIN_DN', [false, 'DN of the Domain fomr the SAM Account.', nil])
       ], self.class)
   end
 
@@ -35,8 +36,12 @@ class Metasploit3 < Msf::Post
 
     # Make sure the extension is loaded.
     if load_extapi
-      domain = get_domain
-      unless domain.nil?
+      domain_dn = get_dn
+      unless domain_dn.nil?
+
+        unless datastore['DOMAIN_DN'].nil?
+          domain_dn = datastore['DOMAIN_DN']
+        end
 
         table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
@@ -49,7 +54,7 @@ class Metasploit3 < Msf::Post
         )
         filter =   "(&(sAMAccountType=805306368)(samAccountName=#{datastore["SAMACCOUNT"]}))"
         query_result = session.extapi.adsi.domain_query(
-                         domain,
+                         domain_dn,
                          filter,
                          1,
                          1,
@@ -62,12 +67,11 @@ class Metasploit3 < Msf::Post
           print_status 'No results where found.'
           return
         end
-        pp query_result
         query_result[:results].each do |obj|
           if obj[1] == '513'
-            print_line 'Domain User'
+            table << ['Domain User']
           end
-          print_line "#{obj[0]}"
+            table << [obj[0]]
         end
         table.print
         print_line
@@ -75,23 +79,24 @@ class Metasploit3 < Msf::Post
     end
   end
 
-  def get_domain
-    domain = nil
+  def get_dn
+    dn = nil
     begin
       subkey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\History'
       v_name = 'DCName'
-      domain_dc = registry_getvaldata(subkey, v_name)
+      key_vals = registry_enumvals(subkey)
+      if key_vals.include?(v_name)
+        domain_dc = registry_getvaldata(subkey, v_name)
+        # lets parse the information
+        dom_info =  domain_dc.split('.')
+        dn = "DC=#{dom_info[1,dom_info.length].join(',DC=')}"
+      else
+        print_status 'Host is not part of a domain.'
+      end
     rescue
       print_error('Could not determine if the host is part of a domain.')
       return nil
     end
-    if !domain_dc.nil?
-      # lets parse the information
-      dom_info =  domain_dc.split('.')
-      domain = dom_info[1].upcase
-    else
-      print_status 'Host is not part of a domain.'
-    end
-    domain
+    dn
   end
 end
