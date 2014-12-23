@@ -68,10 +68,10 @@ class Metasploit3 < Msf::Post
           return
         end
         query_result[:results].each do |obj|
-          if obj[1] == '513'
+          if obj[1][:value] == '513'
             table << ['Domain User']
           end
-            table << [obj[0]]
+            table << [obj[0][:value]]
         end
         table.print
         print_line

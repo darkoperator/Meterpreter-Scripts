@@ -74,17 +74,16 @@ class Metasploit3 < Msf::Post
           query_result[:results].each do |obj|
             # Resolve IPv4 address
             begin
-              pp obj[5]
-              ipv4_info = session.net.resolve.resolve_host(obj[2], AF_INET)
-              table << [obj[0], obj[1], obj[2], obj[3],obj[4],ipv4_info[:ip]]
+              ipv4_info = session.net.resolve.resolve_host(obj[2][:value], AF_INET)
+              table << [obj[0][:value], obj[1][:value], obj[2][:value], obj[3][:value],obj[4][:value],ipv4_info[:ip]]
 
-              service_pack = obj[4].gsub('Service Pack', 'SP')
+              service_pack = obj[4][:value].gsub('Service Pack', 'SP')
               # Save found DC in the database
               report_host(
                   :host      => ipv4_info[:ip],
                   :os_name   => 'Windows',
-                  :os_flavor => obj[3],
-                  :name      => obj[0],
+                  :os_flavor => obj[3][:value],
+                  :name      => obj[0][:value],
                   :purpose   => 'server',
                   :comments  => 'MS SQL Server',
                   :os_sp     => service_pack
@@ -95,16 +94,16 @@ class Metasploit3 < Msf::Post
 
             # Resolve IPv6 address
             begin
-              ipv6_info = session.net.resolve.resolve_host(obj[2], AF_INET6)
-              table << [obj[0], obj[1], obj[2], obj[3],obj[4],ipv4_info[:ip]]
+              ipv6_info = session.net.resolve.resolve_host(obj[2][:value], AF_INET6)
+              table << [obj[0][:value], obj[1][:value], obj[2][:value], obj[3][:value],obj[4][:value],ipv4_info[:ip]]
 
-              service_pack = obj[4].gsub('Service Pack', 'SP')
+              service_pack = obj[4][:value].gsub('Service Pack', 'SP')
               # Save found DC in the database
               report_host(
                   :host      => ipv6_info[:ip],
                   :os_name   => 'Windows',
-                  :os_flavor => obj[3],
-                  :name      => obj[0],
+                  :os_flavor => obj[3][:value],
+                  :name      => obj[0][:value],
                   :purpose   => 'server',
                   :comments  => 'MS SQL Server',
                   :os_sp     => service_pack

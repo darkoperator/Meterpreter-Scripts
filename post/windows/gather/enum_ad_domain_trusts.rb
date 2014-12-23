@@ -74,7 +74,7 @@ class Metasploit3 < Msf::Post
         query_result[:results].each do |obj|
 
           # Case for Trust Direction
-          case obj[2]
+          case obj[2][:value]
           when '0'
             trust_direction = 'Disabled'
           when '1'
@@ -86,7 +86,7 @@ class Metasploit3 < Msf::Post
           end
 
           # Case for trust type
-          case obj[3]
+          case obj[3][:value]
           when '1'
             trust_type = 'Down Level, Windows Domain not running AD'
           when '2'
@@ -97,7 +97,7 @@ class Metasploit3 < Msf::Post
             trust_type = 'DCE'
           end
 
-          table << [obj[0], obj[1], trust_direction, trust_type]
+          table << [obj[0]:value], obj[1][:value], trust_direction, trust_type]
         end
         table.print
         print_line

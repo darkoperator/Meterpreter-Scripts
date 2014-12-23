@@ -44,7 +44,7 @@ class Metasploit3 < Msf::Post
         end
 
         vprint_good("Running query against domain #{domain}")
-        table = Rex::Ui::Text::Table.new(
+        result_table = Rex::Ui::Text::Table.new(
           'Indent' => 4,
           'SortIndex' => -1,
           'Width' => 80,
@@ -53,8 +53,8 @@ class Metasploit3 < Msf::Post
             'SAMAccount',
             'Email',
             'Comment',
-            'Primary Group ID',
-            'Distinguished Name'
+            'Primary_Group_ID',
+            'DistinguishedName'
           }
         )
         filter =   '(&(sAMAccountType=805306368)(userAccountControl:1.2.840.113556.1.4.803:=2))'
@@ -77,9 +77,9 @@ class Metasploit3 < Msf::Post
         end
 
         query_result[:results].each do |obj|
-          table << obj
+          result_table << [obj[0][:value], obj[1][:value], obj[2][:value], obj[3][:value], obj[4][:value]]
         end
-        table.print
+        result_table.print
         print_line
 
         if datastore['STORE_LOOT']
@@ -87,7 +87,7 @@ class Metasploit3 < Msf::Post
                            'ad.disabled_users',
                            'text/plain',
                            session,
-                           table.to_csv
+                           result_table.to_csv
                         )
           print_status("Results saved to: #{stored_path}")
         end

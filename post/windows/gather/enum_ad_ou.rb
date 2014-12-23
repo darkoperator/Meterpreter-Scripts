@@ -72,11 +72,11 @@ class Metasploit3 < Msf::Post
         gpos = enumerate_gpo_basic_info(domain)
 
         query_result[:results].each do |obj|
-          print_good("Name: #{obj[0]}")
-          print_good("DN: #{obj[1]}")
-          if obj[2].length > 0
+          print_good("Name: #{obj[0][:value]}")
+          print_good("DN: #{obj[1][:value]}")
+          if obj[2][:value].length > 0
             print_good("Linked GPOs:")
-            first, *gpos_dn = obj[2].gsub(']','').split('[LDAP://')
+            first, *gpos_dn = obj[2][:value].gsub(']','').split('[LDAP://')
             gpos_dn.each do |gpo|
               dn, enforced = gpo.split(';')
               if enforced == '0'
@@ -141,8 +141,8 @@ class Metasploit3 < Msf::Post
                        )
     gpo_query_result[:results].each do |gpo_obj|
       gpo_info = {
-        :name => gpo_obj[0],
-        :display_name => gpo_obj[1]
+        :name => gpo_obj[0][:value],
+        :display_name => gpo_obj[1][:value]
       }
       gpo_list << gpo_info
     end

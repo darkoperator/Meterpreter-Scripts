@@ -71,7 +71,7 @@ class Metasploit3 < Msf::Post
         end
 
         query_result[:results].each do |obj|
-          table << obj
+          table << [obj[0][:value], obj[1][:value], obj[2][:value], obj[3][:value], obj[4][:value]]
         end
         table.print
         print_line

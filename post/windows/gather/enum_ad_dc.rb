@@ -84,19 +84,19 @@ class Metasploit3 < Msf::Post
         query_result[:results].each do |dc|
           # Resolve IPv4 address
           begin
-            ipv4_info = session.net.resolve.resolve_host(dc[0], AF_INET)
-            table << [dc[0], ipv4_info[:ip], dc[1], dc[2]]
+            ipv4_info = session.net.resolve.resolve_host(dc[0][:value], AF_INET)
+            table << [dc[0][:value], ipv4_info[:ip], dc[1][:value], dc[2][:value]]
 
-            service_pack = dc[2].gsub('Service Pack', 'SP')
-            # TODO: add check so as to not stomp other comments 
+            service_pack = dc[2][:value].gsub('Service Pack', 'SP')
+            # TODO: add check so as to not stomp other comments
             # host = framework.db.find_or_create_host(:host => '10.10.10.3')
-            
+
             # Save found DC in the database
             report_host(
                 :host      => ipv4_info[:ip],
                 :os_name   => 'Windows',
-                :os_flavor => dc[1],
-                :name      => dc[0],
+                :os_flavor => dc[1][:value],
+                :name      => dc[0][:value],
                 :purpose   => 'server',
                 :comments  => 'Domain Controller',
                 :os_sp     => service_pack
@@ -107,15 +107,15 @@ class Metasploit3 < Msf::Post
 
           # Resolve IPv6 address
           begin
-            ipv6_info = session.net.resolve.resolve_host(dc[0], AF_INET6)
-            table << [dc[0], ipv6_info[:ip], dc[1], dc[2]]
+            ipv6_info = session.net.resolve.resolve_host(dc[0][:value], AF_INET6)
+            table << [dc[0][:value], ipv6_info[:ip], dc[1][:value], dc[2][:value]]
 
             # Save found DC in the database
             report_host(
                 :host => ipv6_info[:ip],
                 :os_name    => 'Windows',
-                :os_flavor  => dc[1],
-                :name       => dc[0],
+                :os_flavor  => dc[1][:value],
+                :name       => dc[0][:value],
                 :purpose    => 'server',
                 :comments   => 'Domain Controller'
             )

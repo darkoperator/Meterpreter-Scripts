@@ -107,7 +107,7 @@ class Metasploit3 < Msf::Post
                          )
         if query_result[:results].length > 0
           query_result[:results].each do |obj|
-            table << obj
+            table << [obj[0][:value], obj[1][:value], obj[2][:value]]
           end
           table.print
           print_line

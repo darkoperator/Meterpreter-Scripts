@@ -95,11 +95,11 @@ class Metasploit3 < Msf::Post
         end
 
         query_result[:results].each do |obj|
-          table << obj
-          print_good "Name: #{obj[0]}"
-          print_good "Distinguished Name: #{obj[1]}"
-          print_good "Description: #{obj[2]}"
-          print_good "Member Of: #{obj[3]}"
+          table << [obj[0][:value], obj[1][:value], obj[2][:value], obj[2][:value]]
+          print_good "Name: #{obj[0][:value]}"
+          print_good "Distinguished Name: #{obj[1][:value]}"
+          print_good "Description: #{obj[2][:value]}"
+          print_good "Member Of: #{obj[3][:value]}"
           print_line
         end
 

@@ -83,17 +83,17 @@ class Metasploit3 < Msf::Post
           if subnet_query_result[:results].length > 0
             subnet_query_result[:results].each do |obj|
               subnet = {}
-              subnet[:name] = obj[0]
-              print_good("\tName: #{obj[0]}")
-              subnet[:site] = obj[1]
-              print_good("\tSite: #{obj[1]}")
+              subnet[:name] = obj[0][:value]
+              print_good("\tName: #{obj[0][:value]}")
+              subnet[:site] = obj[1][:value]
+              print_good("\tSite: #{obj[1][:value]}")
               subnets << subnet
               print_good('')
-              puts "adding note for #{obj[0]}"
+              puts "adding note for #{obj[0][:value]}"
               report_note(:host   => session,
                 :type   => 'ad.subnet',
-                :data   => { :subnet => obj[0],
-                             :site => obj[1]},
+                :data   => { :subnet => obj[0][:value],
+                             :site => obj[1][:value]},
                 :update => :unique_data)
             end
           end
@@ -101,8 +101,8 @@ class Metasploit3 < Msf::Post
           #  For each site create a hash table with its information.
           site_query_result[:results].each do |obj|
             # Enumerate the servers on the site.
-            print_status("Enumerating servers for site #{obj[0]}")
-            site_dn = "CN=Servers,CN=#{obj[0]},#{domain}"
+            print_status("Enumerating servers for site #{obj[0][:value]}")
+            site_dn = "CN=Servers,CN=#{obj[0][:value]},#{domain}"
             server_query_result = session.extapi.adsi.domain_query(
                            site_dn,
                            "(objectClass=server)",
@@ -112,39 +112,39 @@ class Metasploit3 < Msf::Post
                          )
             if server_query_result[:results].length > 0
               server_query_result[:results].each do |server|
-                print_good("\tName: #{server[0]}")
-                print_good("\tFQDN: #{server[1]}")
+                print_good("\tName: #{server[0][:value]}")
+                print_good("\tFQDN: #{server[1][:value]}")
                 # Resolving server to its IPv4 address
                 begin
-                  ipv4_info = session.net.resolve.resolve_host(server[1], AF_INET)
+                  ipv4_info = session.net.resolve.resolve_host(server[1][:value], AF_INET)
                   print_good("\tIPv4: #{ipv4_info[:ip]}")
                   report_host(
                     :host      => ipv4_info[:ip],
-                    :name      => server[0],
+                    :name      => server[0][:value],
                     :purpose   => 'server',
                     :comments  => 'Domain Controller'
                   )
                 rescue
-                  vprint_status("Could not resolve the IPv4 address of #{server[1]}")
+                  vprint_status("Could not resolve the IPv4 address of #{server[1][:value]}")
                 end
 
                 # Resolve IPv6 Address.
                 begin
-                  ipv6_info = session.net.resolve.resolve_host(server[1], AF_INET6)
+                  ipv6_info = session.net.resolve.resolve_host(server[1][:value], AF_INET6)
                   print_good("\tIPv6: #{ipv6_info[:ip]}")
                   report_host(
                     :host      => ipv6_info[:ip],
-                    :name      => server[0],
+                    :name      => server[0][:value],
                     :purpose   => 'server',
                     :comments  => 'Domain Controller'
                   )
                 rescue
-                  vprint_status("Could not resolve the IPv6 address of #{server[1]}")
+                  vprint_status("Could not resolve the IPv6 address of #{server[1][:value]}")
                 end
                 print_good('')
               end
             else
-              print_status("Site #{obj[0]} does not have servers assigned to it.")
+              print_status("Site #{obj[0][:value]} does not have servers assigned to it.")
             end
           end
           #table.print

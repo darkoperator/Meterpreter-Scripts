@@ -82,16 +82,16 @@ class Metasploit3 < Msf::Post
           inner_filter = "#{inner_filter}"
 
         when 'NO_PASSWORD'
-          inner_filter = "#{inner_filter}((groupType:1.2.840.113556.1.4.803:=32)"
+          inner_filter = "#{inner_filter}((userAccountControl:1.2.840.113556.1.4.803:=32)"
 
         when 'CHANGE_PASSWORD'
           inner_filter = "#{inner_filter}(!sAMAccountType=805306370)(pwdlastset=0)"
 
         when 'NEVER_EXPIRES'
-          inner_filter = "#{inner_filter}(groupType:1.2.840.113556.1.4.803:=65536)"
+          inner_filter = "#{inner_filter}(userAccountControl:1.2.840.113556.1.4.803:=65536)"
 
         when 'SMARTCARD_REQUIRED'
-          inner_filter = "#{inner_filter}(groupType:1.2.840.113556.1.4.803:=262144)"
+          inner_filter = "#{inner_filter}(userAccountControl:1.2.840.113556.1.4.803:=262144)"
 
         when 'NEVER_LOGGEDON'
           inner_filter = "#{inner_filter}(|(lastlogon=0)(!lastlogon=*))"
@@ -114,7 +114,7 @@ class Metasploit3 < Msf::Post
         end
 
         query_result[:results].each do |obj|
-          table << obj
+          table << [obj[0][:value], obj[1][:value], obj[2][:value], obj[3][:value], obj[4][:value]]
         end
         table.print
         print_line

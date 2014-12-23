@@ -80,15 +80,15 @@ class Metasploit3 < Msf::Post
                           'gPCUserExtensionNames']
                        )
         query_result[:results].each do |obj|
-          linked_ous = get_lineked_to_ou(domain, obj[0])
-          linked_domain = get_lineked_to_domian(domain, obj[0])
+          linked_ous = get_lineked_to_ou(domain, obj[0][:value])
+          linked_domain = get_lineked_to_domian(domain, obj[0][:value])
 
           # Check if only linked GPOs are desired and process.
           next if (linked_ous.length == 0 && linked_domain == 0) && datastore['LINKED']
           print_line ""
-          print_good "Id: #{obj[0]}"
-          print_good "Name: #{obj[1]}"
-          print_good "Location: #{obj[2]}"
+          print_good "Id: #{obj[0][:value]}"
+          print_good "Name: #{obj[1][:value]}"
+          print_good "Location: #{obj[2][:value]}"
           print_good "Linked To OU: #{linked_ous.join("; ")}"
           print_good "Linked To Domain: #{linked_domain.join("; ")}"
           linked_ou_found = linked_ous.join('; ')
@@ -112,8 +112,8 @@ class Metasploit3 < Msf::Post
             gpo_status = 'Disabled'
           end
 
-          print_good "Machine Extensions: #{obj[5]}"
-          print_good "USer Extensions: #{obj[6]}"
+          print_good "Machine Extensions: #{obj[5][:value]}"
+          print_good "USer Extensions: #{obj[6][:value]}"
 
           # Initialize WMI fields for loot
           wmifilter_name = ''
@@ -122,9 +122,9 @@ class Metasploit3 < Msf::Post
           wmifilter_wql = ''
 
           # get WMI Filter information
-          if obj[3].length > 0
+          if obj[3][:value].length > 0
             print_good 'WMI Filter:'
-            filter_id = obj[3].split(';')[1]
+            filter_id = obj[3][:value].split(';')[1]
 
             # GPO can only have on single WMI filter that
             # can have several WQL queries so the array
@@ -143,13 +143,13 @@ class Metasploit3 < Msf::Post
             wmifilter_wql = matched_filter[0][:filter]
           end
           table << [
-            obj[0], # Id
-            obj[1], # Name
-            obj[2], # Location
+            obj[0][:value], # Id
+            obj[1][:value], # Name
+            obj[2][:value], # Location
             linked_ou_found,
             gpo_status,
-            obj[5], # Machine Extensions
-            obj[6], # User Extensions
+            obj[5][:value], # Machine Extensions
+            obj[6][:value], # User Extensions
             wmifilter_name,
             wmifilter_id,
             wmifilter_description,
@@ -202,10 +202,10 @@ class Metasploit3 < Msf::Post
 
     mswmiquery_result[:results].each do |obj|
       wmi_filter = {
-        :id => obj[0],
-        :name =>  obj[1],
-        :description =>  obj[2],
-        :filter => obj[3].split(/;\d*;\d*;\d*;\d*WQL;/).drop(1)
+        :id => obj[0][:value],
+        :name =>  obj[1][:value],
+        :description =>  obj[2][:value],
+        :filter => obj[3][:value].split(/;\d*;\d*;\d*;\d*WQL;/).drop(1)
       }
       wmi_filters << wmi_filter
     end
@@ -226,7 +226,7 @@ class Metasploit3 < Msf::Post
                       )
 
     ou_query_result[:results].each do |obj|
-      linked_ous << obj[0]
+      linked_ous << obj[0][:value]
     end
 
     linked_ous
@@ -245,7 +245,7 @@ class Metasploit3 < Msf::Post
                       )
 
     domain_query_result[:results].each do |obj|
-      linked_domains << obj[0]
+      linked_domains << obj[0][:value]
     end
 
     linked_domains

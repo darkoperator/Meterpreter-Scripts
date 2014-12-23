@@ -77,7 +77,7 @@ class Metasploit3 < Msf::Post
 
           # Identify the object type
           objtype = ''
-          case obj[3].to_s
+          case obj[3][:value].to_s
           when /^CN=Person*/
             objtype = 'User'
 
@@ -89,7 +89,7 @@ class Metasploit3 < Msf::Post
 
           end
 
-          table << [obj[0], obj[1], obj[2], objtype]
+          table << [obj[0][:value], obj[1][:value], obj[2][:value], objtype]
         end
         table.print
         print_line
