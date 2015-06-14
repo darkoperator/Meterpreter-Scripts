@@ -10,6 +10,7 @@ class Metasploit3 < Msf::Post
 
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::Priv
+  include Msf::Post::File 
 
   def initialize(info={})
     super( update_info( info,
@@ -109,22 +110,37 @@ class Metasploit3 < Msf::Post
   end
 
   #-----------------------------------------------------------------------
-  def enum_modules(powershell_version)
+  def enum_modules(powershell_version, users)
     if not powershell_version =~ /1./
-        print_status("Powershell Modules:")
-        powershell_module_path = session.sys.config.getenv('PSModulePath')
-        session.fs.dir.foreach(powershell_module_path) do |m|
+      print_status("Powershell Modules:")
+      powershell_module_path = session.sys.config.getenv('PSModulePath').split(";")
+      powershell_module_path.each do |mpath|
+        print_good("Enumerating modules at #{mpath}")
+        session.fs.dir.foreach(mpath) do |m|
           next if m =~ /^(\.|\.\.)$/
           print_good("\t#{m}")
         end
       end
+
+      users.each do |u|
+        # check if the user has a PowerShell  env setup 
+        users_mod_path = "#{u['userappdata']}\\Modules"
+        if exist?(users_mod_path)
+          print_good("Enumerating modules at #{users_mod_path}")
+          session.fs.dir.foreach(users_mod_path) do |m|
+            next if m =~ /^(\.|\.\.)$/
+            print_good("\t#{m}")
+          end
+        end
+      end
+    end
   end
 
   #-----------------------------------------------------------------------
-  def enum_profiles
+  def enum_profiles(users)
     tmpout = []
     print_status("Checking if users have Powershell profiles")
-    enum_users.each do |u|
+    users.each do |u|
       print_status("Checking #{u['username']}")
       begin
         session.fs.dir.foreach(u["userappdata"]) do |p|
@@ -236,11 +252,12 @@ class Metasploit3 < Msf::Post
     #Check if PowerShell is Installed
     if registry_enumkeys("HKLM\\SOFTWARE\\Microsoft\\").include?("PowerShell")
       print_status("Powershell is Installed on this system.")
+      users = enum_users
       powershell_version = enum_version
       enum_execpolicy
       enum_pssnapins
-      enum_modules(powershell_version)
-      enum_profiles
+      enum_modules(powershell_version, users)
+      enum_profiles(users)
       enum_logging(powershell_version)
     end
   end
