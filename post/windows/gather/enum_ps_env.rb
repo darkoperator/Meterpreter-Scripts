@@ -10,7 +10,7 @@ class Metasploit3 < Msf::Post
 
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::Priv
-  include Msf::Post::File 
+  include Msf::Post::File
 
   def initialize(info={})
     super( update_info( info,
@@ -67,7 +67,7 @@ class Metasploit3 < Msf::Post
         powershell_version = registry_getvaldata("HKLM\\SOFTWARE\\Microsoft\\PowerShell\\1\\PowerShellEngine","PowerShellVersion")
       end
 
-      print_status("Version: #{powershell_version}")
+      print_good("Version: #{powershell_version}")
       return powershell_version
   end
   
@@ -247,6 +247,7 @@ class Metasploit3 < Msf::Post
       end
     end
   end
+
   #-----------------------------------------------------------------------
   def enum_powershell
     #Check if PowerShell is Installed
