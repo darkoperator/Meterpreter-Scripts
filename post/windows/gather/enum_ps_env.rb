@@ -70,6 +70,12 @@ class Metasploit3 < Msf::Post
       end
 
       print_good("Version: #{powershell_version}")
+      report_note(
+        :host   => session,
+        :type   => 'host.ps.version',
+        :data   => { :version => powershell_version },
+        :update => :unique_data
+      )
       return powershell_version
   end
   
@@ -123,6 +129,7 @@ class Metasploit3 < Msf::Post
       end
   end
 
+  # Enumerate all modules found and the  path where they where found.
   #-----------------------------------------------------------------------
   def enum_modules(powershell_version, users)
     if not powershell_version =~ /1./
@@ -172,6 +179,7 @@ class Metasploit3 < Msf::Post
     end
   end
 
+  # Enumerate the profile scripts present and save a copy in loot.
   #-----------------------------------------------------------------------
   def enum_profiles(users)
     tmpout = []
@@ -206,6 +214,7 @@ class Metasploit3 < Msf::Post
     end
   end
 
+  # Enumerate the logging settings introduced in PowerShell 4.0
   #-----------------------------------------------------------------------
   def enum_logging(powershell_version)
     if powershell_version.to_i > 3
