@@ -130,9 +130,20 @@ class Metasploit3 < Msf::Post
       powershell_module_path = session.sys.config.getenv('PSModulePath').split(";")
       powershell_module_path.each do |mpath|
         print_good("Enumerating modules at #{mpath}")
+        modules_found = []
         session.fs.dir.foreach(mpath) do |m|
           next if m =~ /^(\.|\.\.)$/
           print_good("\t#{m}")
+          modules_found << m
+        end
+        if modules_found.count > 0
+          report_note(
+            :host   => session,
+            :type   => 'host.ps.modules',
+            :data   => { :path => mpath,
+                         :modules => modules_found },
+            :update => :unique_data
+          )
         end
       end
 
@@ -141,9 +152,20 @@ class Metasploit3 < Msf::Post
         users_mod_path = "#{u['userappdata']}\\Modules"
         if exist?(users_mod_path)
           print_good("Enumerating modules at #{users_mod_path}")
+          modules_found = []
           session.fs.dir.foreach(users_mod_path) do |m|
             next if m =~ /^(\.|\.\.)$/
             print_good("\t#{m}")
+            modules_found << m
+          end
+          if modules_found.count > 0
+            report_note(
+              :host   => session,
+              :type   => 'host.ps.modules',
+              :data   => { :path => users_mod_path,
+                           :modules => modules_found },
+              :update => :unique_data
+            )
           end
         end
       end
