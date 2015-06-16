@@ -5,12 +5,14 @@
 
 require 'msf/core'
 require 'rex'
+require 'msf/core/auxiliary/report'
 
 class Metasploit3 < Msf::Post
 
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::Priv
   include Msf::Post::File
+  include Msf::Auxiliary::Report
 
   def initialize(info={})
     super( update_info( info,
@@ -88,6 +90,18 @@ class Metasploit3 < Msf::Post
     end
       print_good("Current User Execution Policy: #{powershell_user_policy}")
       print_good("Machine Execution Policy: #{powershell_machine_policy}")
+      report_note(
+        :host   => session,
+        :type   => 'host.ps.execpol.user',
+        :data   => { :execpol => powershell_user_policy },
+        :update => :unique_data
+      )
+      report_note(
+        :host   => session,
+        :type   => 'host.ps.execpol.machine',
+        :data   => { :execpol => powershell_machine_policy },
+        :update => :unique_data
+      )
   end
 
   #-----------------------------------------------------------------------
@@ -156,6 +170,12 @@ class Metasploit3 < Msf::Post
               tmpout.each do |l|
                 print_line("\t#{l.strip}")
               end
+              store_loot("powershell.profile", 
+                "text/plain", 
+                session, 
+                tmpout, 
+                "#{u["username"]}_#{p}.txt", 
+                "PowerShell Profile for #{u["username"]}")
             end
           end
         end
@@ -182,14 +202,33 @@ class Metasploit3 < Msf::Post
           mod_log_val = registry_getvaldata( mod_log_path, "EnableModuleLogging" )
           if mod_log_val == 1
             print_good('Module logging is enabled')
+            
             # Check if specific modules are being logged and if they are enum their names.
             if registry_enumkeys(mod_log_path).include?('ModuleNames')
+              modnames = []
               registry_enumvals("#{mod_log_path}\\ModuleNames").each do |mname| 
                 print_good("\tModule: #{mname}")
+                modnames << mname
               end
+              report_note(
+                :host   => session,
+                :type   => 'host.log.ps_module',
+                :data   => { 
+                  :enabled => true,
+                  :modules => modnames},
+                :update => :unique_data
+              )
             end
           else
             print_good('Module logging is disabled')
+            report_note(
+              :host   => session,
+              :type   => 'host.log.ps_module',
+              :data   => { 
+                :enabled => false,
+                :modules => []},
+              :update => :unique_data
+            )
           end
         end
 
@@ -201,8 +240,22 @@ class Metasploit3 < Msf::Post
             block_log = registry_getvaldata(script_log_path,'EnableScriptBlockLogging')
             if block_log == 1
               print_good("\tScript block logging is enabled.")
+              report_note(
+                :host   => session,
+                :type   => 'host.log.ps_scriptblock',
+                :data   => { 
+                  :enabled => true},
+                :update => :unique_data
+              )
             else
               print_good("\tScript block logging is disabled.")
+              report_note(
+                :host   => session,
+                :type   => 'host.log.ps_scriptblock',
+                :data   => { 
+                  :enabled => false},
+                :update => :unique_data
+              )
             end
           end
 
@@ -210,8 +263,22 @@ class Metasploit3 < Msf::Post
             invoke_block_log = registry_getvaldata(script_log_path,'EnableScriptBlockInvocationLogging')
             if invoke_block_log == 1
               print_good("\tScript block invocation logging is enabled.")
+              report_note(
+                :host   => session,
+                :type   => 'host.log.ps_scriptblockinvocation',
+                :data   => { 
+                  :enabled => true},
+                :update => :unique_data
+              )
             else
               print_good("\tScript block invocation logging is disabled.")
+              report_note(
+                :host   => session,
+                :type   => 'host.log.ps_scriptblockinvocation',
+                :data   => { 
+                  :enabled => false},
+                :update => :unique_data
+              )
             end
           end
         end
@@ -222,26 +289,69 @@ class Metasploit3 < Msf::Post
           if transcript_settings.include?('EnableTranscripting')
             if registry_getvaldata(transcript_log_path, 'EnableTranscripting') == 1
               print_good("\tTrascript logging is enabled.")
+              report_note(
+                :host   => session,
+                :type   => 'host.log.ps_transcript',
+                :data   => { 
+                  :enabled => true},
+                :update => :unique_data
+              )
               if transcript_settings.include?('EnableInvocationHeader')
                 if registry_getvaldata(transcript_log_path, 'EnableInvocationHeader') == 1
                   print_good("\tInvokation header is enabled for transcript.")
+                  report_note(
+                    :host   => session,
+                    :type   => 'host.log.ps_transcript_invocationheader',
+                    :data   => { 
+                      :enabled => true},
+                    :update => :unique_data
+                  )
                 else
                   print_good("\tInvokation header is not enabled for transcript.")
+                  report_note(
+                    :host   => session,
+                    :type   => 'host.log.ps_transcript_invocationheader',
+                    :data   => { 
+                      :enabled => false},
+                    :update => :unique_data
+                  )
                 end
               end
 
               if transcript_settings.include?('OutputDirectory')
                 transcript_loc = registry_getvaldata(transcript_log_path, 'OutputDirectory')
                 print_good("\tTrascripts are saved to #{transcript_loc}")
+                print_good("\tTrascript logging is not enabled.")
+                report_note(
+                  :host   => session,
+                  :type   => 'host.log.ps_transcript_alt_location',
+                  :data   => { 
+                    :location => transcript_loc},
+                  :update => :unique_data
+                )
               else
                 print_good("\tTranscript is saved in users Documents folder.")
               end
 
             else
               print_good("\tTrascript logging is not enabled.")
+              report_note(
+                :host   => session,
+                :type   => 'host.log.ps_transcript',
+                :data   => { 
+                  :enabled => false},
+                :update => :unique_data
+              )
             end
           else
             print_good("\tTrascript logging is not enabled.")
+            report_note(
+                :host   => session,
+                :type   => 'host.log.ps_transcript',
+                :data   => { 
+                  :enabled => false},
+                :update => :unique_data
+              )
           end
         end
       end
