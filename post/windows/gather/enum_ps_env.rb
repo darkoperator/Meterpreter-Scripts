@@ -25,6 +25,7 @@ class Metasploit3 < Msf::Post
       ))
   end
 
+  # Enumerate users on the target box.
   #-----------------------------------------------------------------------
   def enum_users
     os = sysinfo['OS']
@@ -60,7 +61,7 @@ class Metasploit3 < Msf::Post
     end
     return users
   end
-  
+  # Enumerate the PowerShell version.
   #-----------------------------------------------------------------------
   def enum_version
     if registry_enumkeys("HKLM\\SOFTWARE\\Microsoft\\PowerShell\\").include?("3")
@@ -79,6 +80,7 @@ class Metasploit3 < Msf::Post
       return powershell_version
   end
   
+  # Enumerate the ExecutionPolicy in place for User and Machine.
   #-----------------------------------------------------------------------
   def enum_execpolicy
     # Enumerate the machine policy
