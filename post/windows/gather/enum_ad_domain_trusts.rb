@@ -97,7 +97,7 @@ class Metasploit3 < Msf::Post
             trust_type = 'DCE'
           end
 
-          table << [obj[0]:value], obj[1][:value], trust_direction, trust_type]
+          table << [obj[0]:value], [obj[1][:value], trust_direction, trust_type]
         end
         table.print
         print_line
