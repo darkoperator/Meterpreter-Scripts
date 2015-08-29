@@ -18,7 +18,7 @@ class Metasploit3 < Msf::Post
     super( update_info( info,
         'Name'          => 'Windows Gather Powershell Environment Setting Enumeration',
         'Description'   => %q{ This module will enumerate Microsoft Powershell settings },
-        'License'       => MSF_LICENSE,
+        'License'       => BSD_LICENSE,
         'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>' ],
         'Platform'      => [ 'win' ],
         'SessionTypes'  => [ 'meterpreter' ]
@@ -79,7 +79,7 @@ class Metasploit3 < Msf::Post
       )
       return powershell_version
   end
-  
+
   # Enumerate the ExecutionPolicy in place for User and Machine.
   #-----------------------------------------------------------------------
   def enum_execpolicy

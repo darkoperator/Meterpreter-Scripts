@@ -21,7 +21,7 @@ class Metasploit3 < Msf::Post
         module supports detectoin of Hyper-V, VMWare, Virtual PC,
         VirtualBox, Xen, and QEMU.
       },
-      'License'       => MSF_LICENSE,
+      'License'       => BSD_LICENSE ,
       'Author'        => [ 'Carlos Perez <carlos_perez[at]darkoperator.com>'],
       'Platform'      => [ 'win' ],
       'SessionTypes'  => [ 'meterpreter' ]
