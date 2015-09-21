@@ -60,7 +60,7 @@ class Metasploit3 < Msf::Post
     when 'ALL'
         queries << {
           :query => "SELECT displayName,pathToSignedProductExe,productState FROM AntiVirusProduct",
-          :product => 'AntiSpyware'}
+          :product => 'AntiVirus'}
         queries << {
           :query => "SELECT displayName,pathToSignedProductExe,productState FROM AntiSpywareProduct",
           :product => 'AntiSpyware'}
@@ -90,8 +90,7 @@ class Metasploit3 < Msf::Post
               end
             end
          rescue RuntimeError
-            print_error "Known bug in WMI query, try migrating to another process"
-            return
+           print_error "A runtime error was encountered when querying for #{q[:product]}"
         end
     end
   end
