@@ -225,7 +225,7 @@ class Metasploit3 < Msf::Post
       transcript_log_path = "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\PowerShell\\Transcription"
       win_pol_path = "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows"
 
-      vprint_status('Checking for logging.')
+      print_status('Checking for logging.')
       if registry_enumkeys(win_pol_path).include?("PowerShell")
 
         # Check if module loging is enabled
@@ -353,8 +353,8 @@ class Metasploit3 < Msf::Post
 
               if transcript_settings.include?('OutputDirectory')
                 transcript_loc = registry_getvaldata(transcript_log_path, 'OutputDirectory')
+                if transcript_loc.length > 0
                 print_good("\tTrascripts are saved to #{transcript_loc}")
-                print_good("\tTrascript logging is not enabled.")
                 report_note(
                   :host   => session,
                   :type   => 'host.log.ps_transcript_alt_location',
@@ -362,6 +362,9 @@ class Metasploit3 < Msf::Post
                     :location => transcript_loc},
                   :update => :unique_data
                 )
+                else
+                  print_good("\tTranscript is saved in users Documents folder.")
+                end
               else
                 print_good("\tTranscript is saved in users Documents folder.")
               end
