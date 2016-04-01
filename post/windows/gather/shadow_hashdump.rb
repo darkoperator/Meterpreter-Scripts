@@ -10,7 +10,7 @@ require 'rex'
 require 'msf/core/post/common'
 require 'msf/core/post/windows/registry'
 
-class Metasploit3 < Msf::Post
+class MetasploitModule < Msf::Post
 
 	include Msf::Auxiliary::Report
 	include Msf::Post::Windows::Registry

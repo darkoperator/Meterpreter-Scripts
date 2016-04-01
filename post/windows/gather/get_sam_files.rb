@@ -8,7 +8,7 @@ require 'msf/core/post/windows/priv'
 require 'msf/core/post/windows/registry'
 #require 'msf/core/post/windows/accounts'
 
-class Metasploit3 < Msf::Post
+class MetasploitModule < Msf::Post
 
 	include Msf::Post::Common
 	include Msf::Post::File
