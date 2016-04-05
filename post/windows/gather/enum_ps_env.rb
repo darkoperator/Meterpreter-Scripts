@@ -35,7 +35,7 @@ class MetasploitModule < Msf::Post
     env_vars = session.sys.config.getenvs('SystemDrive', 'USERNAME')
     sysdrv = env_vars['SystemDrive']
 
-    if os =~ /Windows 7|Vista|2008|2012|2016|8|10/
+    if os =~ /Windows 7|Vista|Server 2008| Server 2012| Server 2016|8|10/
       path4users = sysdrv + "\\Users\\"
       profilepath = "\\Documents\\WindowsPowerShell\\"
     else
@@ -157,7 +157,7 @@ class MetasploitModule < Msf::Post
       end
 
       users.each do |u|
-        # check if the user has a PowerShell  env setup 
+        # check if the user has a PowerShell  env setup
         users_mod_path = "#{u['userappdata']}\\Modules"
         if exist?(users_mod_path)
           print_good("Enumerating modules at #{users_mod_path}")
@@ -202,11 +202,11 @@ class MetasploitModule < Msf::Post
               tmpout.each do |l|
                 print_line("\t#{l.strip}")
               end
-              store_loot("powershell.profile", 
-                "text/plain", 
-                session, 
-                tmpout, 
-                "#{u["username"]}_#{p}.txt", 
+              store_loot("powershell.profile",
+                "text/plain",
+                session,
+                tmpout,
+                "#{u["username"]}_#{p}.txt",
                 "PowerShell Profile for #{u["username"]}")
             end
           end
@@ -235,18 +235,18 @@ class MetasploitModule < Msf::Post
           mod_log_val = registry_getvaldata( mod_log_path, "EnableModuleLogging" )
           if mod_log_val == 1
             print_good('Module logging is enabled')
-            
+
             # Check if specific modules are being logged and if they are enum their names.
             if registry_enumkeys(mod_log_path).include?('ModuleNames')
               modnames = []
-              registry_enumvals("#{mod_log_path}\\ModuleNames").each do |mname| 
+              registry_enumvals("#{mod_log_path}\\ModuleNames").each do |mname|
                 print_good("\tModule: #{mname}")
                 modnames << mname
               end
               report_note(
                 :host   => session,
                 :type   => 'host.log.ps_module',
-                :data   => { 
+                :data   => {
                   :enabled => true,
                   :modules => modnames},
                 :update => :unique_data
@@ -257,7 +257,7 @@ class MetasploitModule < Msf::Post
             report_note(
               :host   => session,
               :type   => 'host.log.ps_module',
-              :data   => { 
+              :data   => {
                 :enabled => false,
                 :modules => []},
               :update => :unique_data
@@ -276,7 +276,7 @@ class MetasploitModule < Msf::Post
               report_note(
                 :host   => session,
                 :type   => 'host.log.ps_scriptblock',
-                :data   => { 
+                :data   => {
                   :enabled => true},
                 :update => :unique_data
               )
@@ -285,7 +285,7 @@ class MetasploitModule < Msf::Post
               report_note(
                 :host   => session,
                 :type   => 'host.log.ps_scriptblock',
-                :data   => { 
+                :data   => {
                   :enabled => false},
                 :update => :unique_data
               )
@@ -299,7 +299,7 @@ class MetasploitModule < Msf::Post
               report_note(
                 :host   => session,
                 :type   => 'host.log.ps_scriptblockinvocation',
-                :data   => { 
+                :data   => {
                   :enabled => true},
                 :update => :unique_data
               )
@@ -308,7 +308,7 @@ class MetasploitModule < Msf::Post
               report_note(
                 :host   => session,
                 :type   => 'host.log.ps_scriptblockinvocation',
-                :data   => { 
+                :data   => {
                   :enabled => false},
                 :update => :unique_data
               )
@@ -325,7 +325,7 @@ class MetasploitModule < Msf::Post
               report_note(
                 :host   => session,
                 :type   => 'host.log.ps_transcript',
-                :data   => { 
+                :data   => {
                   :enabled => true},
                 :update => :unique_data
               )
@@ -335,7 +335,7 @@ class MetasploitModule < Msf::Post
                   report_note(
                     :host   => session,
                     :type   => 'host.log.ps_transcript_invocationheader',
-                    :data   => { 
+                    :data   => {
                       :enabled => true},
                     :update => :unique_data
                   )
@@ -344,7 +344,7 @@ class MetasploitModule < Msf::Post
                   report_note(
                     :host   => session,
                     :type   => 'host.log.ps_transcript_invocationheader',
-                    :data   => { 
+                    :data   => {
                       :enabled => false},
                     :update => :unique_data
                   )
@@ -358,7 +358,7 @@ class MetasploitModule < Msf::Post
                 report_note(
                   :host   => session,
                   :type   => 'host.log.ps_transcript_alt_location',
-                  :data   => { 
+                  :data   => {
                     :location => transcript_loc},
                   :update => :unique_data
                 )
@@ -374,7 +374,7 @@ class MetasploitModule < Msf::Post
               report_note(
                 :host   => session,
                 :type   => 'host.log.ps_transcript',
-                :data   => { 
+                :data   => {
                   :enabled => false},
                 :update => :unique_data
               )
@@ -384,11 +384,41 @@ class MetasploitModule < Msf::Post
             report_note(
                 :host   => session,
                 :type   => 'host.log.ps_transcript',
-                :data   => { 
+                :data   => {
                   :enabled => false},
                 :update => :unique_data
               )
           end
+        end
+      end
+    end
+  end
+
+  #-----------------------------------------------------------------------
+  def check_ps2enabled
+    os = sysinfo['OS']
+    if os =~ /Server 2012| Server 2016|8|10/
+      print_status('Checking if PSv2 engine is enabled.')
+      path = "HKLM\\SOFTWARE\\Microsoft\\PowerShell\\1"
+      if registry_enumkeys(path).include?("PowerShellEngine")
+        if registry_getvaldata("#{path}\\PowerShellEngine", 'PowerShellVersion') == '2.0'
+          print_good("\tPowerShell 2.0 engine feature is enabled.")
+          report_note(
+                  :host   => session,
+                  :type   => 'host.log.ps_v2_feature',
+                  :data   => {
+                    :enabled => true},
+                  :update => :unique_data
+                )
+        else
+          print_good("\tPowerShell 2.0 engine feature is not enabled.")
+          report_note(
+                  :host   => session,
+                  :type   => 'host.log.ps_v2_feature',
+                  :data   => {
+                    :enabled => false},
+                  :update => :unique_data
+                )
         end
       end
     end
@@ -406,6 +436,7 @@ class MetasploitModule < Msf::Post
       enum_modules(powershell_version, users)
       enum_profiles(users)
       enum_logging(powershell_version)
+      check_ps2enabled
     end
   end
   #-----------------------------------------------------------------------
