@@ -35,7 +35,7 @@ class MetasploitModule < Msf::Post
     env_vars = session.sys.config.getenvs('SystemDrive', 'USERNAME')
     sysdrv = env_vars['SystemDrive']
 
-    if os =~ /Windows 7|Vista|Server 2008| Server 2012| Server 2016|8|10/
+    if os =~ /Windows 7|Vista|2008|2012|2016|8|10/
       path4users = sysdrv + "\\Users\\"
       profilepath = "\\Documents\\WindowsPowerShell\\"
     else
@@ -397,7 +397,7 @@ class MetasploitModule < Msf::Post
   #-----------------------------------------------------------------------
   def check_ps2enabled
     os = sysinfo['OS']
-    if os =~ /Server 2012| Server 2016|8|10/
+    if os =~ /Windows 2012|2016|8|10/
       print_status('Checking if PSv2 engine is enabled.')
       path = "HKLM\\SOFTWARE\\Microsoft\\PowerShell\\1"
       if registry_enumkeys(path).include?("PowerShellEngine")
