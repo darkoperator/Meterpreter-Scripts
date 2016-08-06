@@ -382,12 +382,12 @@ class MetasploitModule < Msf::Post
           else
             print_good("\tTrascript logging is not enabled.")
             report_note(
-                :host   => session,
-                :type   => 'host.log.ps_transcript',
-                :data   => {
-                  :enabled => false},
-                :update => :unique_data
-              )
+              :host   => session,
+              :type   => 'host.log.ps_transcript',
+              :data   => {
+                :enabled => false},
+              :update => :unique_data
+            )
           end
         end
       end
@@ -404,21 +404,21 @@ class MetasploitModule < Msf::Post
         if registry_getvaldata("#{path}\\PowerShellEngine", 'PowerShellVersion') == '2.0'
           print_good("\tPowerShell 2.0 engine feature is enabled.")
           report_note(
-                  :host   => session,
-                  :type   => 'host.log.ps_v2_feature',
-                  :data   => {
-                    :enabled => true},
-                  :update => :unique_data
-                )
+            :host   => session,
+            :type   => 'host.log.ps_v2_feature',
+            :data   => {
+              :enabled => true},
+            :update => :unique_data
+          )
         else
           print_good("\tPowerShell 2.0 engine feature is not enabled.")
           report_note(
-                  :host   => session,
-                  :type   => 'host.log.ps_v2_feature',
-                  :data   => {
-                    :enabled => false},
-                  :update => :unique_data
-                )
+            :host   => session,
+            :type   => 'host.log.ps_v2_feature',
+            :data   => {
+              :enabled => false},
+            :update => :unique_data
+          )
         end
       end
     end
