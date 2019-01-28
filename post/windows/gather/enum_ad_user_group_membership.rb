@@ -18,8 +18,8 @@ class MetasploitModule < Msf::Post
             of through a Windows Meterpreter Session.},
           'License'       => BSD_LICENSE,
           'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
-          'Platform'      => 'win',
-          'SessionTypes'  => 'meterpreter'
+          'Platform'      => ['win'],
+          'SessionTypes'  => ['meterpreter']
       ))
     register_options(
       [

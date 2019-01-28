@@ -9,17 +9,17 @@ class MetasploitModule < Msf::Post
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::ExtAPI
 
-  def initialize(info = {})
-    super(update_info(
-          info,
+  def initialize(info={})
+    super( update_info( info,
           'Name'          => 'Windows Gather AD Enumerate Domain Controllers',
-          'Description'   => %q{ This Module will perform an ADSI query and
+          'Description'   => %q{ 
+           This Module will perform an ADSI query and
            enumerate all Domain Controller on the domain the host is a
            member of through a Windows Meterpreter Session.},
           'License'       => BSD_LICENSE,
           'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
-          'Platform'      => 'win',
-          'SessionTypes'  => 'meterpreter'
+          'Platform'      => [ 'win' ],
+          'SessionTypes'  => [ 'meterpreter' ]
       ))
     register_options(
       [

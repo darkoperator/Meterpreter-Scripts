@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
-require 'msf/core'
-require 'rex'
+#require 'msf/core'
+#require 'rex'
 require 'msf/core/auxiliary/report'
 
 class MetasploitModule < Msf::Post
@@ -9,8 +9,7 @@ class MetasploitModule < Msf::Post
   include Msf::Post::Windows::Registry
   include Msf::Post::Windows::ExtAPI
   def initialize(info = {})
-    super(update_info(
-          info,
+    super(update_info(info,
           'Name'          => 'Windows Gather AD Enumerate Domain Organizational Units',
           'Description'   => %q{ This Module will perform an ADSI query and enumerate all
             Organizational Units on the domain the host is a member of through a Windows

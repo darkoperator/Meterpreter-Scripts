@@ -14,8 +14,8 @@ class MetasploitModule < Msf::Post
                               the domain the target host is a member of.},
           'License'       => BSD_LICENSE,
           'Author'        => 'Carlos Perez <carlos_perez[at]darkoperator.com>',
-          'Platform'      => 'win',
-          'SessionTypes'  => 'meterpreter'
+          'Platform'      => [ 'win' ],
+        'SessionTypes'  => [ 'meterpreter' ]
       ))
     deregister_options('MAX_SEARCH','DOMAIN')
   end
